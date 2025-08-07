@@ -2,7 +2,6 @@
 // Created by acpro on 25-8-7.
 //
 
-#pragma once
 #include "config.hpp"
 #include <fstream>
 #include <spdlog/spdlog.h>
@@ -16,11 +15,12 @@ void Config::load(const std::string& path) {
     std::ifstream ifs(path);
     if (!ifs.is_open()) {
         spdlog::error("open config file {} failed", path);
-        return;
+        throw std::runtime_error("Failed to open config file: " + path);
     }
     ifs >> j_;
+    spdlog::info("Config loaded successfully from {}", path);
 }
 
-const std::string& Config::get(const std::string& key) const {
+std::string Config::get(const std::string& key) const {
     return j_.at(key).get<std::string>();
 }

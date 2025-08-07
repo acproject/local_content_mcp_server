@@ -2,7 +2,7 @@
 # 1) 生成.pb 代码 （如果使用 protobuf）
 # -----------------------------------------------------------------
 if(BUILD_WITH_PROTOBUF)
-    protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS proto/message.proto)
+    protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/../proto/message.proto)
     list(APPEND CORE_SRCS ${PROTO_SRCS} ${PROTO_HDRS})
 endif()
 
@@ -45,11 +45,15 @@ if(BUILD_WITH_PROMETHEUS)
 endif()
 
 # 编译选项
-target_compile_options(core PRIVATE
-    -Wall
-    -Wextra
-    -Werror
-)
+if(MSVC)
+    target_compile_options(core PRIVATE /W4)
+else()
+    target_compile_options(core PRIVATE
+        -Wall
+        -Wextra
+        -Werror
+    )
+endif()
 
 # -----------------------------------------------------------------
 # 3) 主程序
