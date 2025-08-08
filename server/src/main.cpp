@@ -140,6 +140,12 @@ int main(int argc, char* argv[]) {
         // 初始化HTTP处理器
         spdlog::info("Initializing HTTP handler...");
         g_http_handler = std::make_unique<HttpHandler>(mcp_server);
+        
+        // 初始化HTTP处理器的附加功能（文件上传和LLaMA）
+        if (!g_http_handler->initialize()) {
+            spdlog::error("Failed to initialize HTTP handler features");
+            return 1;
+        }
         spdlog::info("HTTP handler initialized successfully");
         
         // 设置信号处理

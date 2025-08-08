@@ -16,20 +16,15 @@ import {
   Add as AddIcon,
   Search as SearchIcon,
   Label as TagIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 
-// import ContentList from './components/ContentList';
-// import ContentForm from './components/ContentForm';
-// import ContentSearch from './components/ContentSearch';
-// import TagsView from './components/TagsView';
-// import ContentDetail from './components/ContentDetail';
-
-// Temporary placeholder components
-const ContentList = () => <div>内容列表组件</div>;
-const ContentForm = () => <div>内容表单组件</div>;
-const ContentSearch = () => <div>内容搜索组件</div>;
-const TagsView = () => <div>标签视图组件</div>;
-const ContentDetail = () => <div>内容详情组件</div>;
+import ContentList from './components/ContentList';
+import ContentForm from './components/ContentForm';
+import ContentSearch from './components/ContentSearch';
+import TagsView from './components/TagsView';
+import ContentDetail from './components/ContentDetail';
+import ConfigView from './components/ConfigView';
 
 const theme = createTheme({
   palette: {
@@ -65,6 +60,9 @@ function App() {
               <Button color="inherit" component={Link} to="/tags" startIcon={<TagIcon />}>
                 标签
               </Button>
+              <Button color="inherit" component={Link} to="/config" startIcon={<SettingsIcon />}>
+                配置
+              </Button>
             </Toolbar>
           </AppBar>
 
@@ -76,6 +74,7 @@ function App() {
               <Route path="/content/:id" element={<ContentDetail />} />
               <Route path="/search" element={<ContentSearch />} />
               <Route path="/tags" element={<TagsView />} />
+              <Route path="/config" element={<ConfigView />} />
             </Routes>
           </Container>
         </Box>

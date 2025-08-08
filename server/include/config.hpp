@@ -39,6 +39,25 @@ public:
     std::string get_static_files_path() const { return static_files_path_; }
     bool is_static_files_enabled() const { return enable_static_files_; }
     
+    // 文件上传配置
+    std::string get_upload_path() const { return upload_path_; }
+    int get_max_file_size() const { return max_file_size_; }
+    std::vector<std::string> get_allowed_file_types() const { return allowed_file_types_; }
+    bool is_file_upload_enabled() const { return enable_file_upload_; }
+    
+    // LLaMA.cpp配置
+    std::string get_llama_model_path() const { return llama_model_path_; }
+    std::string get_llama_executable_path() const { return llama_executable_path_; }
+    int get_llama_context_size() const { return llama_context_size_; }
+    int get_llama_threads() const { return llama_threads_; }
+    float get_llama_temperature() const { return llama_temperature_; }
+    int get_llama_max_tokens() const { return llama_max_tokens_; }
+    bool is_llama_enabled() const { return enable_llama_; }
+    
+    // 服务端配置管理
+    bool update_config(const nlohmann::json& new_config);
+    bool save_config_to_file(const std::string& config_path) const;
+    
     // 设置配置（用于测试）
     void set_host(const std::string& host) { host_ = host; }
     void set_port(int port) { port_ = port; }
@@ -77,9 +96,25 @@ private:
     std::string static_files_path_ = "./web";
     bool enable_static_files_ = true;
     
+    // 文件上传配置
+    std::string upload_path_ = "./uploads";
+    int max_file_size_ = 10 * 1024 * 1024; // 10MB
+    std::vector<std::string> allowed_file_types_ = {".txt", ".md", ".pdf", ".doc", ".docx", ".jpg", ".png", ".gif"};
+    bool enable_file_upload_ = true;
+    
+    // LLaMA.cpp配置
+    std::string llama_model_path_ = "";
+    std::string llama_executable_path_ = "./llama.cpp/main";
+    int llama_context_size_ = 2048;
+    int llama_threads_ = 4;
+    float llama_temperature_ = 0.7f;
+    int llama_max_tokens_ = 512;
+    bool enable_llama_ = false;
+    
     // 辅助方法
     void load_defaults();
     void apply_config(const nlohmann::json& config);
+    std::string current_config_path_;
 };
 
 } // namespace mcp

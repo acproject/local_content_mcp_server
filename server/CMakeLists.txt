@@ -5,6 +5,8 @@ add_library(mcp_server_lib STATIC
     src/mcp_server.cpp
     src/http_handler.cpp
     src/config.cpp
+    src/file_upload.cpp
+    src/llama_client.cpp
 )
 
 # 头文件目录

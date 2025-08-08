@@ -20,6 +20,7 @@ bool Config::load_from_file(const std::string& config_path) {
         
         nlohmann::json config;
         file >> config;
+        current_config_path_ = config_path;
         return load_from_json(config);
     } catch (const std::exception& e) {
         spdlog::error("Failed to load config from file {}: {}", config_path, e.what());
@@ -98,6 +99,21 @@ nlohmann::json Config::to_json() const {
     config["static_files_path"] = static_files_path_;
     config["enable_static_files"] = enable_static_files_;
     
+    // 文件上传配置
+    config["upload_path"] = upload_path_;
+    config["max_file_size"] = max_file_size_;
+    config["allowed_file_types"] = allowed_file_types_;
+    config["enable_file_upload"] = enable_file_upload_;
+    
+    // LLaMA.cpp配置
+    config["llama_model_path"] = llama_model_path_;
+    config["llama_executable_path"] = llama_executable_path_;
+    config["llama_context_size"] = llama_context_size_;
+    config["llama_threads"] = llama_threads_;
+    config["llama_temperature"] = llama_temperature_;
+    config["llama_max_tokens"] = llama_max_tokens_;
+    config["enable_llama"] = enable_llama_;
+    
     return config;
 }
 
@@ -114,6 +130,21 @@ void Config::load_defaults() {
     cors_origin_ = "*";
     static_files_path_ = "./web";
     enable_static_files_ = true;
+    
+    // 文件上传默认配置
+    upload_path_ = "./uploads";
+    max_file_size_ = 10 * 1024 * 1024; // 10MB
+    allowed_file_types_ = {".txt", ".md", ".pdf", ".doc", ".docx", ".jpg", ".png", ".gif"};
+    enable_file_upload_ = true;
+    
+    // LLaMA.cpp默认配置
+    llama_model_path_ = "";
+    llama_executable_path_ = "./llama.cpp/main";
+    llama_context_size_ = 2048;
+    llama_threads_ = 4;
+    llama_temperature_ = 0.7f;
+    llama_max_tokens_ = 512;
+    enable_llama_ = false;
 }
 
 void Config::apply_config(const nlohmann::json& config) {
@@ -152,6 +183,85 @@ void Config::apply_config(const nlohmann::json& config) {
     }
     if (config.contains("enable_static_files")) {
         enable_static_files_ = config["enable_static_files"].get<bool>();
+    }
+    
+    // 文件上传配置
+    if (config.contains("upload_path")) {
+        upload_path_ = config["upload_path"].get<std::string>();
+    }
+    if (config.contains("max_file_size")) {
+        max_file_size_ = config["max_file_size"].get<int>();
+    }
+    if (config.contains("allowed_file_types")) {
+        allowed_file_types_ = config["allowed_file_types"].get<std::vector<std::string>>();
+    }
+    if (config.contains("enable_file_upload")) {
+        enable_file_upload_ = config["enable_file_upload"].get<bool>();
+    }
+    
+    // LLaMA.cpp配置
+    if (config.contains("llama_model_path")) {
+        llama_model_path_ = config["llama_model_path"].get<std::string>();
+    }
+    if (config.contains("llama_executable_path")) {
+        llama_executable_path_ = config["llama_executable_path"].get<std::string>();
+    }
+    if (config.contains("llama_context_size")) {
+        llama_context_size_ = config["llama_context_size"].get<int>();
+    }
+    if (config.contains("llama_threads")) {
+        llama_threads_ = config["llama_threads"].get<int>();
+    }
+    if (config.contains("llama_temperature")) {
+        llama_temperature_ = config["llama_temperature"].get<float>();
+    }
+    if (config.contains("llama_max_tokens")) {
+        llama_max_tokens_ = config["llama_max_tokens"].get<int>();
+    }
+    if (config.contains("enable_llama")) {
+        enable_llama_ = config["enable_llama"].get<bool>();
+    }
+}
+
+bool Config::update_config(const nlohmann::json& new_config) {
+    try {
+        // 应用新配置
+        apply_config(new_config);
+        
+        // 验证配置
+        if (!validate()) {
+            spdlog::error("Invalid configuration after update");
+            return false;
+        }
+        
+        // 如果有配置文件路径，保存到文件
+        if (!current_config_path_.empty()) {
+            return save_config_to_file(current_config_path_);
+        }
+        
+        return true;
+    } catch (const std::exception& e) {
+        spdlog::error("Failed to update config: {}", e.what());
+        return false;
+    }
+}
+
+bool Config::save_config_to_file(const std::string& config_path) const {
+    try {
+        std::ofstream file(config_path);
+        if (!file.is_open()) {
+            spdlog::error("Failed to open config file for writing: {}", config_path);
+            return false;
+        }
+        
+        nlohmann::json config = to_json();
+        file << config.dump(4); // 格式化输出
+        
+        spdlog::info("Configuration saved to: {}", config_path);
+        return true;
+    } catch (const std::exception& e) {
+        spdlog::error("Failed to save config to file {}: {}", config_path, e.what());
+        return false;
     }
 }
 

@@ -41,6 +41,44 @@ export interface ContentListResponse {
   total_pages: number;
 }
 
+export interface ServerConfig {
+  host: string;
+  port: number;
+  database_path: string;
+  log_level: string;
+  log_file: string;
+  max_content_size: number;
+  default_page_size: number;
+  max_page_size: number;
+  enable_cors: boolean;
+  cors_origin: string;
+  static_files_path: string;
+  enable_static_files: boolean;
+  upload_path: string;
+  max_file_size: number;
+  allowed_file_types: string[];
+  enable_file_upload: boolean;
+  llama_model_path: string;
+  llama_executable_path: string;
+  llama_context_size: number;
+  llama_threads: number;
+  llama_temperature: number;
+  llama_max_tokens: number;
+  enable_llama: boolean;
+}
+
+export class ConfigAPI {
+  static async getConfig(): Promise<ServerConfig> {
+    const response = await api.get('/config');
+    return response.data;
+  }
+
+  static async updateConfig(config: ServerConfig): Promise<ServerConfig> {
+    const response = await api.put('/config', config);
+    return response.data;
+  }
+}
+
 export class ContentAPI {
   static async getContent(id: number): Promise<ContentItem> {
     const response = await api.get(`/content/${id}`);
