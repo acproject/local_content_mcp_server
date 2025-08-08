@@ -50,3 +50,5 @@ Thumbs.db
 # Dependencies
 vcpkg_installed/
 conan_build/
+web/node_modules
+web/node_modules/**
