@@ -1,0 +1,60 @@
+{
+  "server": {
+    "host": "localhost",
+    "port": 8080,
+    "threads": 4,
+    "timeout_seconds": 30,
+    "max_request_size": 10485760,
+    "enable_cors": true,
+    "cors_origins": ["*"],
+    "enable_compression": true
+  },
+  "database": {
+    "path": "./data/content.db",
+    "enable_wal": true,
+    "cache_size": 2000,
+    "busy_timeout": 5000,
+    "enable_foreign_keys": true,
+    "journal_mode": "WAL",
+    "synchronous": "NORMAL"
+  },
+  "logging": {
+    "level": "info",
+    "file_path": "./logs/server.log",
+    "max_file_size": 10485760,
+    "max_files": 5,
+    "enable_console": true,
+    "enable_file": true,
+    "pattern": "[%Y-%m-%d %H:%M:%S.%e] [%l] [%t] %v"
+  },
+  "content": {
+    "max_title_length": 200,
+    "max_content_length": 1048576,
+    "max_tags_per_item": 20,
+    "max_tag_length": 50,
+    "default_page_size": 20,
+    "max_page_size": 100,
+    "enable_full_text_search": true,
+    "search_result_limit": 1000
+  },
+  "security": {
+    "enable_auth": false,
+    "api_key": "",
+    "rate_limit_requests_per_minute": 100,
+    "enable_rate_limiting": false,
+    "allowed_ips": [],
+    "blocked_ips": []
+  },
+  "static_files": {
+    "enable": true,
+    "root_path": "./static",
+    "index_file": "index.html",
+    "cache_max_age": 3600
+  },
+  "mcp": {
+    "enable": true,
+    "endpoint": "/mcp",
+    "max_request_size": 1048576,
+    "timeout_seconds": 30
+  }
+}

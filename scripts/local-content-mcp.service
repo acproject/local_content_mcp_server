@@ -1,0 +1,62 @@
+[Unit]
+Description=Local Content MCP Server
+Documentation=https://github.com/your-org/local-content-mcp-server
+After=network.target network-online.target
+Wants=network-online.target
+Requires=network.target
+
+[Service]
+# Service configuration
+Type=simple
+User=mcp
+Group=mcp
+WorkingDirectory=/opt/local-content-mcp
+ExecStart=/opt/local-content-mcp/bin/mcp_server --config /opt/local-content-mcp/config/server.json
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# Restart configuration
+Restart=always
+RestartSec=5
+StartLimitInterval=60
+StartLimitBurst=3
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/local-content-mcp/data /opt/local-content-mcp/logs
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+MemoryMax=1G
+CPUQuota=200%
+
+# Environment
+Environment=MCP_LOG_LEVEL=info
+Environment=MCP_CONFIG_PATH=/opt/local-content-mcp/config/server.json
+Environment=MCP_DATA_PATH=/opt/local-content-mcp/data
+Environment=MCP_LOG_PATH=/opt/local-content-mcp/logs
+
+# Standard streams
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mcp-server
+
+[Install]
+WantedBy=multi-user.target
+Alias=mcp-server.service

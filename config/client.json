@@ -1,0 +1,40 @@
+{
+  "mcp_client": {
+    "server_url": "http://localhost:8080/mcp",
+    "timeout_ms": 30000,
+    "retry_count": 3,
+    "retry_delay_ms": 1000,
+    "enable_compression": true,
+    "user_agent": "Local Content MCP Client/1.0",
+    "headers": {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    }
+  },
+  "http_client": {
+    "base_url": "http://localhost:8080",
+    "timeout_seconds": 30,
+    "retry_count": 3,
+    "retry_delay_ms": 1000,
+    "enable_compression": true,
+    "user_agent": "Local Content HTTP Client/1.0",
+    "verify_ssl": true,
+    "follow_redirects": true,
+    "max_redirects": 5
+  },
+  "content_client": {
+    "preferred_protocol": "mcp",
+    "enable_cache": true,
+    "cache_ttl_seconds": 300,
+    "default_page_size": 20,
+    "max_page_size": 100,
+    "enable_progress_callback": false
+  },
+  "logging": {
+    "level": "info",
+    "enable_console": true,
+    "enable_file": false,
+    "file_path": "./logs/client.log",
+    "pattern": "[%Y-%m-%d %H:%M:%S.%e] [%l] %v"
+  }
+}
