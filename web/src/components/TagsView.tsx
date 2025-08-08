@@ -20,7 +20,7 @@ import {
 
 import { ContentAPI, ContentItem } from '../services/api';
 
-const TagsView: React.FC = (): JSX.Element => {
+const TagsView: React.FC = () => {
   const [tags, setTags] = useState<string[]>([]);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [tagContent, setTagContent] = useState<ContentItem[]>([]);
@@ -37,10 +37,17 @@ const TagsView: React.FC = (): JSX.Element => {
     try {
       setLoading(true);
       const data = await ContentAPI.getTags();
-      setTags(data);
+      // 确保 data 是数组
+      if (Array.isArray(data)) {
+        setTags(data);
+      } else {
+        setTags([]);
+        console.warn('Tags data is not an array:', data);
+      }
       setError(null);
     } catch (err) {
       setError('获取标签失败');
+      setTags([]); // 设置为空数组以防止 map 错误
       console.error('Error fetching tags:', err);
     } finally {
       setLoading(false);

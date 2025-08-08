@@ -25,7 +25,7 @@ import {
 
 import { ContentAPI, ContentItem, ContentListResponse } from '../services/api';
 
-const ContentList: React.FC = () => {
+const ContentList = () => {
   const [contentList, setContentList] = useState<ContentListResponse>({ content: [], page: 1, page_size: 10, total_count: 0, total_pages: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -116,7 +116,7 @@ const ContentList: React.FC = () => {
           variant="contained"
           color="primary"
           component={Link}
-          to="/create"
+          to="/add"
           startIcon={<EditIcon />}
         >
           创建新内容

@@ -21,7 +21,7 @@ import {
 
 import { ContentAPI, ContentItem } from '../services/api';
 
-const ContentSearch: React.FC = (): JSX.Element => {
+const ContentSearch: React.FC = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -75,11 +75,11 @@ const ContentSearch: React.FC = (): JSX.Element => {
     
     return parts.map((part, index) => 
       regex.test(part) ? (
-        <span key={index} style={{ backgroundColor: '#ffeb3b', padding: '0 2px' }}>
+        <Typography component="span" key={index} style={{ backgroundColor: '#ffeb3b', padding: '0 2px' }}>
           {part}
-        </span>
+        </Typography>
       ) : (
-        part
+        <Typography component="span" key={index}>{part}</Typography>
       )
     );
   };

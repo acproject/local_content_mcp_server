@@ -114,6 +114,15 @@ nlohmann::json Config::to_json() const {
     config["llama_max_tokens"] = llama_max_tokens_;
     config["enable_llama"] = enable_llama_;
     
+    // Ollama配置
+    config["ollama_host"] = ollama_host_;
+    config["ollama_port"] = ollama_port_;
+    config["ollama_model"] = ollama_model_;
+    config["ollama_temperature"] = ollama_temperature_;
+    config["ollama_max_tokens"] = ollama_max_tokens_;
+    config["ollama_timeout"] = ollama_timeout_;
+    config["enable_ollama"] = enable_ollama_;
+    
     return config;
 }
 
@@ -145,6 +154,15 @@ void Config::load_defaults() {
     llama_temperature_ = 0.7f;
     llama_max_tokens_ = 512;
     enable_llama_ = false;
+    
+    // Ollama默认配置
+    ollama_host_ = "localhost";
+    ollama_port_ = 11434;
+    ollama_model_ = "llama2";
+    ollama_temperature_ = 0.7f;
+    ollama_max_tokens_ = 512;
+    ollama_timeout_ = 30;
+    enable_ollama_ = false;
 }
 
 void Config::apply_config(const nlohmann::json& config) {
@@ -220,6 +238,29 @@ void Config::apply_config(const nlohmann::json& config) {
     }
     if (config.contains("enable_llama")) {
         enable_llama_ = config["enable_llama"].get<bool>();
+    }
+    
+    // Ollama配置
+    if (config.contains("ollama_host")) {
+        ollama_host_ = config["ollama_host"].get<std::string>();
+    }
+    if (config.contains("ollama_port")) {
+        ollama_port_ = config["ollama_port"].get<int>();
+    }
+    if (config.contains("ollama_model")) {
+        ollama_model_ = config["ollama_model"].get<std::string>();
+    }
+    if (config.contains("ollama_temperature")) {
+        ollama_temperature_ = config["ollama_temperature"].get<float>();
+    }
+    if (config.contains("ollama_max_tokens")) {
+        ollama_max_tokens_ = config["ollama_max_tokens"].get<int>();
+    }
+    if (config.contains("ollama_timeout")) {
+        ollama_timeout_ = config["ollama_timeout"].get<int>();
+    }
+    if (config.contains("enable_ollama")) {
+        enable_ollama_ = config["enable_ollama"].get<bool>();
     }
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <nlohmann/json.hpp>
 
 namespace mcp {
@@ -53,6 +54,15 @@ public:
     float get_llama_temperature() const { return llama_temperature_; }
     int get_llama_max_tokens() const { return llama_max_tokens_; }
     bool is_llama_enabled() const { return enable_llama_; }
+    
+    // Ollama配置
+    std::string get_ollama_host() const { return ollama_host_; }
+    int get_ollama_port() const { return ollama_port_; }
+    std::string get_ollama_model() const { return ollama_model_; }
+    float get_ollama_temperature() const { return ollama_temperature_; }
+    int get_ollama_max_tokens() const { return ollama_max_tokens_; }
+    int get_ollama_timeout() const { return ollama_timeout_; }
+    bool is_ollama_enabled() const { return enable_ollama_; }
     
     // 服务端配置管理
     bool update_config(const nlohmann::json& new_config);
@@ -110,6 +120,15 @@ private:
     float llama_temperature_ = 0.7f;
     int llama_max_tokens_ = 512;
     bool enable_llama_ = false;
+    
+    // Ollama配置
+    std::string ollama_host_ = "localhost";
+    int ollama_port_ = 11434;
+    std::string ollama_model_ = "llama2";
+    float ollama_temperature_ = 0.7f;
+    int ollama_max_tokens_ = 512;
+    int ollama_timeout_ = 30;
+    bool enable_ollama_ = false;
     
     // 辅助方法
     void load_defaults();

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import type { JSX } from 'react';
 import {
   Paper,
   TextField,
@@ -28,9 +27,9 @@ import {
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 
-import { ConfigAPI, ServerConfig } from '../services/api';
+import { ConfigAPI, ServerConfig, configService } from '../services/api';
 
-const ConfigView: React.FC = (): JSX.Element => {
+const ConfigView: React.FC = () => {
   const [config, setConfig] = useState<ServerConfig>({
     host: '',
     port: 0,
@@ -55,6 +54,13 @@ const ConfigView: React.FC = (): JSX.Element => {
     llama_temperature: 0.7,
     llama_max_tokens: 512,
     enable_llama: false,
+    ollama_host: 'localhost',
+    ollama_port: 11434,
+    ollama_model: 'llama2',
+    ollama_temperature: 0.7,
+    ollama_max_tokens: 512,
+    ollama_timeout: 30,
+    enable_ollama: false,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -86,8 +92,8 @@ const ConfigView: React.FC = (): JSX.Element => {
     setConfig(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : 
-              ['port', 'max_content_size', 'default_page_size', 'max_page_size', 'max_file_size', 'llama_context_size', 'llama_threads', 'llama_max_tokens'].includes(name) ? parseInt(value) || 0 :
-              name === 'llama_temperature' ? parseFloat(value) || 0 :
+              ['port', 'max_content_size', 'default_page_size', 'max_page_size', 'max_file_size', 'llama_context_size', 'llama_threads', 'llama_max_tokens', 'ollama_port', 'ollama_max_tokens', 'ollama_timeout'].includes(name) ? parseInt(value) || 0 :
+              ['llama_temperature', 'ollama_temperature'].includes(name) ? Math.round((parseFloat(value) || 0) * 100) / 100 :
               value,
     }));
   };
@@ -133,11 +139,26 @@ const ConfigView: React.FC = (): JSX.Element => {
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
       setError(null);
-    } catch (err) {
-      setSnackbarMessage('保存配置失败');
+    } catch (err: any) {
+      console.error('❌ Config save failed:', err);
+      console.error('❌ Error details:', {
+        message: err?.message,
+        response: err?.response?.data,
+        status: err?.response?.status,
+        config: err?.config
+      });
+      
+      let errorMessage = '保存配置失败';
+      if (err?.response?.status) {
+        errorMessage += ` (HTTP ${err.response.status})`;
+      }
+      if (err?.message) {
+        errorMessage += `: ${err.message}`;
+      }
+      
+      setSnackbarMessage(errorMessage);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
-      console.error('Error saving config:', err);
     } finally {
       setSaving(false);
     }
@@ -169,8 +190,11 @@ const ConfigView: React.FC = (): JSX.Element => {
           <Typography variant="body2" color="textSecondary" paragraph>
             这里可以配置服务器的基本参数。修改配置后需要重启服务器才能生效。
           </Typography>
+          <Typography variant="body2" color="textSecondary" paragraph>
+            当前连接的服务器: {configService.getApiBaseUrl().replace('/api', '')}
+          </Typography>
           <Typography variant="body2" color="textSecondary">
-            配置文件位置: /Users/acproject/workspace/cpp_projects/local_content_mcp_server/resources/config.json
+            配置通过服务器 API 动态获取和保存
           </Typography>
         </CardContent>
       </Card>
@@ -555,7 +579,7 @@ const ConfigView: React.FC = (): JSX.Element => {
                     label="温度"
                     name="llama_temperature"
                     type="number"
-                    value={config.llama_temperature}
+                    value={Math.round(config.llama_temperature * 100) / 100}
                     onChange={handleInputChange}
                     margin="normal"
                     disabled={saving || !config.enable_llama}
@@ -574,6 +598,110 @@ const ConfigView: React.FC = (): JSX.Element => {
                     margin="normal"
                     disabled={saving || !config.enable_llama}
                     inputProps={{ min: 1, max: 2048 }}
+                    helperText="生成文本的最大令牌数"
+                  />
+                </Grid>
+              </Grid>
+            </AccordionDetails>
+          </Accordion>
+
+          {/* Ollama配置 */}
+          <Accordion>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="h6">Ollama AI配置</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={config.enable_ollama}
+                        onChange={handleInputChange}
+                        name="enable_ollama"
+                        disabled={saving}
+                      />
+                    }
+                    label="启用Ollama AI功能"
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Ollama主机地址"
+                    name="ollama_host"
+                    value={config.ollama_host}
+                    onChange={handleInputChange}
+                    margin="normal"
+                    disabled={saving || !config.enable_ollama}
+                    helperText="Ollama服务器的主机地址"
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Ollama端口号"
+                    name="ollama_port"
+                    type="number"
+                    value={config.ollama_port}
+                    onChange={handleInputChange}
+                    margin="normal"
+                    disabled={saving || !config.enable_ollama}
+                    inputProps={{ min: 1, max: 65535 }}
+                    helperText="Ollama服务器的端口号，默认11434"
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Ollama模型名称"
+                    name="ollama_model"
+                    value={config.ollama_model}
+                    onChange={handleInputChange}
+                    margin="normal"
+                    disabled={saving || !config.enable_ollama}
+                    helperText="要使用的Ollama模型名称，如llama2、codellama等"
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="超时时间 (秒)"
+                    name="ollama_timeout"
+                    type="number"
+                    value={config.ollama_timeout}
+                    onChange={handleInputChange}
+                    margin="normal"
+                    disabled={saving || !config.enable_ollama}
+                    inputProps={{ min: 5, max: 300 }}
+                    helperText="请求超时时间，5-300秒"
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="温度"
+                    name="ollama_temperature"
+                    type="number"
+                    value={Math.round(config.ollama_temperature * 100) / 100}
+                    onChange={handleInputChange}
+                    margin="normal"
+                    disabled={saving || !config.enable_ollama}
+                    inputProps={{ min: 0, max: 2, step: 0.1 }}
+                    helperText="生成文本的随机性，0-2"
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="最大令牌数"
+                    name="ollama_max_tokens"
+                    type="number"
+                    value={config.ollama_max_tokens}
+                    onChange={handleInputChange}
+                    margin="normal"
+                    disabled={saving || !config.enable_ollama}
+                    inputProps={{ min: 1, max: 4096 }}
                     helperText="生成文本的最大令牌数"
                   />
                 </Grid>

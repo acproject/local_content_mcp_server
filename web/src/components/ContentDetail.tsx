@@ -18,7 +18,7 @@ import {
 
 import { ContentAPI, ContentItem } from '../services/api';
 
-const ContentDetail: React.FC = (): JSX.Element => {
+const ContentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [content, setContent] = useState<ContentItem | null>(null);
