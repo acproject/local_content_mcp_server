@@ -227,6 +227,10 @@ export class ConfigAPI {
 export class ContentAPI {
   static async getContent(id: number): Promise<ContentItem> {
     const response = await api.get(`/content/${id}`);
+    // 处理后端返回的包装格式 - 后端返回 {data: {...}, success: true}
+    if (response.data && response.data.success && response.data.data) {
+      return response.data.data;
+    }
     return response.data;
   }
 
