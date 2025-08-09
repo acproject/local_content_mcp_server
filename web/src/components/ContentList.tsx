@@ -26,7 +26,13 @@ import {
 import { ContentAPI, ContentItem, ContentListResponse } from '../services/api';
 
 const ContentList = () => {
-  const [contentList, setContentList] = useState<ContentListResponse>({ content: [], page: 1, page_size: 10, total_count: 0, total_pages: 0 });
+  const [contentList, setContentList] = useState<ContentListResponse>({ 
+    content: [], 
+    page: 1, 
+    page_size: 10, 
+    total_count: 0, 
+    total_pages: 0 
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -39,22 +45,72 @@ const ContentList = () => {
   const pageSize = 6;
 
   const fetchContent = async (currentPage: number) => {
+    console.log('=== fetchContent called ===');
+    console.log('Page:', currentPage);
+    console.log('PageSize:', pageSize);
+    
     try {
       setLoading(true);
-      const data = await ContentAPI.listContent(currentPage, pageSize);
-      setContentList(data);
       setError(null);
-    } catch (err) {
-      setError('获取内容失败');
-      console.error('Error fetching content:', err);
+      
+      console.log('Making API call to ContentAPI.listContent...');
+      const data = await ContentAPI.listContent(currentPage, pageSize);
+      
+      console.log('=== API Response ===');
+      console.log('Full response:', JSON.stringify(data, null, 2));
+      console.log('Response type:', typeof data);
+      console.log('Has content property:', 'content' in data);
+      console.log('Content array:', data?.content);
+      console.log('Content array type:', typeof data?.content);
+      console.log('Content array length:', data?.content?.length);
+      console.log('Total pages:', data?.total_pages);
+      console.log('Total count:', data?.total_count);
+      
+      setContentList(data);
+      
+      console.log('=== State Updated ===');
+      console.log('ContentList state will be set to:', data);
+      
+    } catch (err: any) {
+      console.error('=== Error in fetchContent ===');
+      console.error('Error object:', err);
+      console.error('Error message:', err.message);
+      console.error('Error stack:', err.stack);
+      if (err.response) {
+        console.error('Response status:', err.response.status);
+        console.error('Response data:', err.response.data);
+      }
+      setError(err.message || '获取内容失败');
     } finally {
       setLoading(false);
+      console.log('=== fetchContent completed ===');
     }
   };
 
   useEffect(() => {
+    console.log('ContentList useEffect triggered, page:', page);
     fetchContent(page);
   }, [page]);
+
+  // 添加渲染时的调试信息
+  console.log('ContentList render - loading:', loading, 'error:', error, 'contentList:', contentList);
+  
+  // 将API暴露到全局，方便调试
+  React.useEffect(() => {
+    (window as any).testAPI = async () => {
+      try {
+        console.log('=== Manual API Test ===');
+        const result = await ContentAPI.listContent(1, 10);
+        console.log('Manual API result:', result);
+        return result;
+      } catch (err) {
+        console.error('Manual API error:', err);
+        throw err;
+      }
+    };
+  }, []);
+
+
 
   const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
@@ -90,9 +146,13 @@ const ContentList = () => {
     return tags.split(',').filter(tag => tag.trim());
   };
 
+
+
+
+
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" mt={4}>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
         <Typography>加载中...</Typography>
       </Box>
     );
@@ -100,7 +160,7 @@ const ContentList = () => {
 
   if (error) {
     return (
-      <Box display="flex" justifyContent="center" mt={4}>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
         <Alert severity="error">{error}</Alert>
       </Box>
     );
@@ -112,19 +172,31 @@ const ContentList = () => {
         <Typography variant="h4" component="h1">
           内容列表
         </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          component={Link}
-          to="/add"
-          startIcon={<EditIcon />}
-        >
-          创建新内容
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            component={Link}
+            to="/add"
+            startIcon={<EditIcon />}
+          >
+            创建新内容
+          </Button>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => {
+              console.log('Manual refresh clicked');
+              fetchContent(page);
+            }}
+          >
+            刷新数据
+          </Button>
+        </Box>
       </Box>
 
-      {contentList && contentList.content && contentList.content.length === 0 ? (
-        <Box display="flex" justifyContent="center" mt={4}>
+      {(!contentList?.content || contentList.content.length === 0) ? (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
           <Typography variant="h6" color="textSecondary">
             暂无内容
           </Typography>
@@ -132,7 +204,7 @@ const ContentList = () => {
       ) : (
         <>
           <Grid container spacing={3}>
-            {contentList?.content?.map((item) => (
+            {contentList.content.map((item) => (
               <Grid item xs={12} md={6} key={item.id}>
                 <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <CardContent sx={{ flexGrow: 1 }}>
@@ -201,13 +273,14 @@ const ContentList = () => {
             ))}
           </Grid>
 
-          {contentList && contentList.total_pages > 1 && (
+          {(contentList?.total_pages || 0) > 1 && (
             <Box display="flex" justifyContent="center" mt={4}>
               <Pagination
-                count={contentList.total_pages}
+                count={contentList?.total_pages || 0}
                 page={page}
                 onChange={handlePageChange}
                 color="primary"
+                size="large"
               />
             </Box>
           )}

@@ -66,6 +66,7 @@ private:
     void handle_get_file_content(const httplib::Request& req, httplib::Response& res);
     void handle_serve_file(const httplib::Request& req, httplib::Response& res);
     void handle_get_upload_stats(const httplib::Request& req, httplib::Response& res);
+    void handle_parse_document(const httplib::Request& req, httplib::Response& res);
     
     // LLaMA端点
     void handle_llama_generate(const httplib::Request& req, httplib::Response& res);
@@ -77,16 +78,22 @@ private:
     void handle_llama_config(const httplib::Request& req, httplib::Response& res);
     void handle_llama_stats(const httplib::Request& req, httplib::Response& res);
     
+    // Ollama端点
+    void handle_ollama_models(const httplib::Request& req, httplib::Response& res);
+    void handle_ollama_generate(const httplib::Request& req, httplib::Response& res);
+    void handle_ollama_status(const httplib::Request& req, httplib::Response& res);
+    
     // 静态文件服务（用于客户端界面）
     void handle_static_files(const httplib::Request& req, httplib::Response& res);
     
     // 辅助方法
     void set_cors_headers(httplib::Response& res);
     void send_json_response(httplib::Response& res, const nlohmann::json& json, int status = 200);
-    void send_error_response(httplib::Response& res, const std::string& message, int status = 400);
+    void send_error_response(httplib::Response& res, const std::string& message, int status = 500);
     bool parse_json_body(const std::string& body, nlohmann::json& json, std::string& error_msg);
     int parse_int_param(const httplib::Request& req, const std::string& param, int default_value = 0);
     std::string get_param(const httplib::Request& req, const std::string& param, const std::string& default_value = "");
+    nlohmann::json create_default_parse_result(const std::string& content, const std::string& file_path);
 };
 
 } // namespace mcp

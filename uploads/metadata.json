@@ -1,0 +1,26 @@
+{
+    "files": [
+        {
+            "description": "",
+            "file_path": "./uploads/ab02f78f7ac8bc55214241c079f49101.md",
+            "file_size": 5770,
+            "filename": "JSON_OPERATIONS_EXAMPLES.md",
+            "id": "ab02f78f7ac8bc55214241c079f49101",
+            "mime_type": "text/markdown",
+            "original_name": "JSON_OPERATIONS_EXAMPLES.md",
+            "tags": [],
+            "upload_time": "2025-08-09T02:47:24Z"
+        },
+        {
+            "description": "",
+            "file_path": "./uploads/4f0793e1505ec1a29a563d76c1f2a7e6.md",
+            "file_size": 5474,
+            "filename": "PACKAGING.md",
+            "id": "4f0793e1505ec1a29a563d76c1f2a7e6",
+            "mime_type": "text/markdown",
+            "original_name": "PACKAGING.md",
+            "tags": [],
+            "upload_time": "2025-08-09T02:48:33Z"
+        }
+    ]
+}

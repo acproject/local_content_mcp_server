@@ -206,7 +206,7 @@ nlohmann::json MCPServer::handle_call_tool(const std::string& tool_name, const n
 nlohmann::json MCPServer::handle_list_resources() {
     nlohmann::json resources_array = nlohmann::json::array();
     
-    // 添加一些示例资源
+    // 添加内容资源
     MCPResource content_resource;
     content_resource.uri = "content://all";
     content_resource.name = "All Content";
@@ -214,12 +214,32 @@ nlohmann::json MCPServer::handle_list_resources() {
     content_resource.mime_type = "application/json";
     resources_array.push_back(content_resource.to_json());
     
+    // 添加统计资源
     MCPResource stats_resource;
     stats_resource.uri = "stats://summary";
     stats_resource.name = "Content Statistics";
     stats_resource.description = "Summary statistics of the content database";
     stats_resource.mime_type = "application/json";
     resources_array.push_back(stats_resource.to_json());
+    
+    // 添加文档资源
+    try {
+        auto content_list = content_manager_->list_content(1, 1000); // 获取所有内容
+        if (content_list.contains("content") && content_list["content"].is_array()) {
+            for (const auto& item : content_list["content"]) {
+                if (item.contains("id") && item.contains("title")) {
+                    MCPResource doc_resource;
+                    doc_resource.uri = "document://" + std::to_string(item["id"].get<int>());
+                    doc_resource.name = item["title"].get<std::string>();
+                    doc_resource.description = "Document: " + item["title"].get<std::string>();
+                    doc_resource.mime_type = "text/plain";
+                    resources_array.push_back(doc_resource.to_json());
+                }
+            }
+        }
+    } catch (const std::exception& e) {
+        spdlog::warn("Failed to load document resources: {}", e.what());
+    }
     
     nlohmann::json response;
     response["resources"] = resources_array;
@@ -248,6 +268,29 @@ nlohmann::json MCPServer::handle_read_resource(const std::string& uri) {
                 {"text", result.dump(2)}
             }
         };
+    } else if (uri.starts_with("document://")) {
+        // 处理文档资源
+        std::string id_str = uri.substr(11); // 移除 "document://" 前缀
+        try {
+            int content_id = std::stoi(id_str);
+            nlohmann::json args;
+            args["id"] = content_id;
+            auto result = content_manager_->get_content(content_id);
+            
+            if (result.contains("content")) {
+                response["contents"] = {
+                    {
+                        {"uri", uri},
+                        {"mimeType", "text/plain"},
+                        {"text", result["content"].get<std::string>()}
+                    }
+                };
+            } else {
+                return create_error_response(-1, "Document not found: " + uri);
+            }
+        } catch (const std::exception& e) {
+            return create_error_response(-1, "Invalid document ID in URI: " + uri);
+        }
     } else {
         return create_error_response(-1, "Unknown resource: " + uri);
     }

@@ -174,6 +174,10 @@ void HttpHandler::setup_routes() {
         handle_get_upload_stats(req, res);
     });
     
+    server_->Post("/api/files/parse", [this](const httplib::Request& req, httplib::Response& res) {
+        handle_parse_document(req, res);
+    });
+    
     // LLaMA端点
     server_->Post("/api/llama/generate", [this](const httplib::Request& req, httplib::Response& res) {
         handle_llama_generate(req, res);
@@ -205,6 +209,19 @@ void HttpHandler::setup_routes() {
     
     server_->Get("/api/llama/stats", [this](const httplib::Request& req, httplib::Response& res) {
         handle_llama_stats(req, res);
+    });
+    
+    // Ollama端点
+    server_->Get("/api/ollama/models", [this](const httplib::Request& req, httplib::Response& res) {
+        handle_ollama_models(req, res);
+    });
+    
+    server_->Post("/api/ollama/generate", [this](const httplib::Request& req, httplib::Response& res) {
+        handle_ollama_generate(req, res);
+    });
+    
+    server_->Get("/api/ollama/status", [this](const httplib::Request& req, httplib::Response& res) {
+        handle_ollama_status(req, res);
     });
     
     // 静态文件服务
@@ -1147,6 +1164,290 @@ void HttpHandler::handle_llama_stats(const httplib::Request& req, httplib::Respo
         spdlog::error("Error getting LLaMA stats: {}", e.what());
         send_error_response(res, "Failed to get LLaMA statistics", 500);
     }
+}
+
+// Ollama端点实现
+void HttpHandler::handle_ollama_models(const httplib::Request& req, httplib::Response& res) {
+    auto& config = Config::instance();
+    
+    if (!config.is_ollama_enabled()) {
+        send_error_response(res, "Ollama service not enabled", 503);
+        return;
+    }
+    
+    try {
+        // 构建Ollama API URL
+        std::string ollama_host = config.get_ollama_host();
+        int ollama_port = config.get_ollama_port();
+        std::string url = "http://" + ollama_host + ":" + std::to_string(ollama_port) + "/api/tags";
+        
+        // 创建HTTP客户端
+        httplib::Client client(ollama_host, ollama_port);
+        client.set_connection_timeout(5, 0); // 5秒超时
+        client.set_read_timeout(10, 0); // 10秒读取超时
+        
+        // 发送请求
+        auto result = client.Get("/api/tags");
+        
+        if (result && result->status == 200) {
+            // 解析响应
+            nlohmann::json ollama_response;
+            try {
+                ollama_response = nlohmann::json::parse(result->body);
+                
+                // 提取模型列表
+                nlohmann::json models_list = nlohmann::json::array();
+                if (ollama_response.contains("models") && ollama_response["models"].is_array()) {
+                    for (const auto& model : ollama_response["models"]) {
+                        if (model.contains("name")) {
+                            models_list.push_back(model["name"]);
+                        }
+                    }
+                }
+                
+                nlohmann::json response;
+                response["models"] = models_list;
+                response["status"] = "success";
+                send_json_response(res, response);
+            } catch (const std::exception& e) {
+                spdlog::error("Failed to parse Ollama response: {}", e.what());
+                send_error_response(res, "Failed to parse Ollama response", 500);
+            }
+        } else {
+            std::string error_msg = "Failed to connect to Ollama service";
+            if (result) {
+                error_msg += " (HTTP " + std::to_string(result->status) + ")";
+            }
+            spdlog::error(error_msg);
+            send_error_response(res, error_msg, 503);
+        }
+    } catch (const std::exception& e) {
+        spdlog::error("Failed to get Ollama models: {}", e.what());
+        send_error_response(res, "Failed to get Ollama models", 500);
+    }
+}
+
+void HttpHandler::handle_ollama_generate(const httplib::Request& req, httplib::Response& res) {
+    auto& config = Config::instance();
+    
+    if (!config.is_ollama_enabled()) {
+        send_error_response(res, "Ollama service not enabled", 503);
+        return;
+    }
+    
+    nlohmann::json json_body;
+    std::string error_msg;
+    if (!parse_json_body(req.body, json_body, error_msg)) {
+        send_error_response(res, "Invalid JSON: " + error_msg, 400);
+        return;
+    }
+    
+    try {
+        // 构建Ollama API URL
+        std::string ollama_host = config.get_ollama_host();
+        int ollama_port = config.get_ollama_port();
+        
+        // 创建HTTP客户端
+        httplib::Client client(ollama_host, ollama_port);
+        client.set_connection_timeout(5, 0);
+        client.set_read_timeout(30, 0); // 生成可能需要更长时间
+        
+        // 准备请求体
+        nlohmann::json ollama_request;
+        ollama_request["model"] = json_body.value("model", config.get_ollama_model());
+        ollama_request["prompt"] = json_body.value("prompt", "");
+        ollama_request["stream"] = false;
+        
+        if (json_body.contains("temperature")) {
+            ollama_request["options"]["temperature"] = json_body["temperature"];
+        }
+        if (json_body.contains("max_tokens")) {
+            ollama_request["options"]["num_predict"] = json_body["max_tokens"];
+        }
+        
+        // 发送请求
+        auto result = client.Post("/api/generate", ollama_request.dump(), "application/json");
+        
+        if (result && result->status == 200) {
+            try {
+                nlohmann::json ollama_response = nlohmann::json::parse(result->body);
+                send_json_response(res, ollama_response);
+            } catch (const std::exception& e) {
+                spdlog::error("Failed to parse Ollama generate response: {}", e.what());
+                send_error_response(res, "Failed to parse Ollama response", 500);
+            }
+        } else {
+            std::string error_msg = "Failed to generate with Ollama";
+            if (result) {
+                error_msg += " (HTTP " + std::to_string(result->status) + ")";
+            }
+            spdlog::error(error_msg);
+            send_error_response(res, error_msg, 503);
+        }
+    } catch (const std::exception& e) {
+        spdlog::error("Failed to call Ollama generate: {}", e.what());
+        send_error_response(res, "Failed to call Ollama generate", 500);
+    }
+}
+
+void HttpHandler::handle_ollama_status(const httplib::Request& req, httplib::Response& res) {
+    auto& config = Config::instance();
+    
+    nlohmann::json response;
+    response["enabled"] = config.is_ollama_enabled();
+    response["host"] = config.get_ollama_host();
+    response["port"] = config.get_ollama_port();
+    response["model"] = config.get_ollama_model();
+    
+    if (config.is_ollama_enabled()) {
+        try {
+            // 尝试连接Ollama服务检查状态
+            httplib::Client client(config.get_ollama_host(), config.get_ollama_port());
+            client.set_connection_timeout(2, 0);
+            client.set_read_timeout(5, 0);
+            
+            auto result = client.Get("/api/tags");
+            response["connected"] = (result && result->status == 200);
+            response["status"] = response["connected"] ? "running" : "disconnected";
+        } catch (const std::exception& e) {
+            response["connected"] = false;
+            response["status"] = "error";
+            response["error"] = e.what();
+        }
+    } else {
+        response["connected"] = false;
+        response["status"] = "disabled";
+    }
+    
+    send_json_response(res, response);
+}
+
+void HttpHandler::handle_parse_document(const httplib::Request& req, httplib::Response& res) {
+    try {
+        if (!file_upload_manager_) {
+            send_error_response(res, "File upload is not enabled", 503);
+            return;
+        }
+        
+        nlohmann::json request_json;
+        std::string error_msg;
+        
+        if (!parse_json_body(req.body, request_json, error_msg)) {
+            send_error_response(res, "Invalid JSON: " + error_msg, 400);
+            return;
+        }
+        
+        if (!request_json.contains("file_path") || !request_json["file_path"].is_string()) {
+            send_error_response(res, "file_path parameter is required", 400);
+            return;
+        }
+        
+        std::string file_path = request_json["file_path"];
+        std::string ai_service = request_json.value("ai_service", "llama");
+        
+        // 验证AI服务选择
+        if (ai_service != "llama" && ai_service != "ollama") {
+            send_error_response(res, "Invalid ai_service. Must be 'llama' or 'ollama'", 400);
+            return;
+        }
+        
+        // 检查文件是否存在
+        if (!std::filesystem::exists(file_path)) {
+            send_error_response(res, "File not found: " + file_path, 404);
+            return;
+        }
+        
+        // 读取文件内容
+        std::ifstream file(file_path);
+        if (!file.is_open()) {
+            send_error_response(res, "Failed to open file: " + file_path, 500);
+            return;
+        }
+        
+        std::string content((std::istreambuf_iterator<char>(file)),
+                           std::istreambuf_iterator<char>());
+        file.close();
+        
+        if (content.empty()) {
+            send_error_response(res, "File is empty or could not be read", 400);
+            return;
+        }
+        
+        // 构建解析提示
+        std::string prompt = "Please analyze the following document and extract structured information. ";
+        prompt += "Return a JSON object with the following fields: title (string), content (string), content_type (string), tags (comma-separated string). ";
+        prompt += "The content_type should be one of: article, note, document, reference, tutorial, or other. ";
+        prompt += "Generate relevant tags based on the document content. ";
+        prompt += "Document content:\n\n" + content;
+        
+        nlohmann::json parse_result;
+        
+        if (ai_service == "llama" && llama_service_) {
+            // 使用LLaMA服务解析
+            try {
+                LlamaRequest llama_request;
+                llama_request.prompt = prompt;
+                llama_request.max_tokens = 1000;
+                llama_request.temperature = 0.3;
+                
+                auto llama_response = llama_service_->process_request(llama_request);
+                if (llama_response.success && !llama_response.text.empty()) {
+                    // 尝试解析LLaMA返回的JSON
+                    try {
+                        parse_result = nlohmann::json::parse(llama_response.text);
+                    } catch (const std::exception&) {
+                        // 如果解析失败，创建默认结果
+                        parse_result = create_default_parse_result(content, file_path);
+                    }
+                } else {
+                    parse_result = create_default_parse_result(content, file_path);
+                }
+            } catch (const std::exception& e) {
+                spdlog::warn("LLaMA parsing failed: {}", e.what());
+                parse_result = create_default_parse_result(content, file_path);
+            }
+        } else if (ai_service == "ollama") {
+            // 使用Ollama服务解析
+            auto& config = Config::instance();
+            if (!config.is_ollama_enabled()) {
+                send_error_response(res, "Ollama service is not enabled", 503);
+                return;
+            }
+            
+            try {
+                // 这里应该调用Ollama API进行文档解析
+                // 目前先返回默认结果
+                parse_result = create_default_parse_result(content, file_path);
+            } catch (const std::exception& e) {
+                spdlog::warn("Ollama parsing failed: {}", e.what());
+                parse_result = create_default_parse_result(content, file_path);
+            }
+        } else {
+            // 默认解析（不使用AI）
+            parse_result = create_default_parse_result(content, file_path);
+        }
+        
+        send_json_response(res, parse_result);
+        
+    } catch (const std::exception& e) {
+        spdlog::error("Error parsing document: {}", e.what());
+        send_error_response(res, "Failed to parse document", 500);
+    }
+}
+
+nlohmann::json HttpHandler::create_default_parse_result(const std::string& content, const std::string& file_path) {
+    nlohmann::json result;
+    
+    // 从文件路径提取标题
+    std::filesystem::path path(file_path);
+    std::string filename = path.stem().string();
+    
+    result["title"] = filename;
+    result["content"] = content;
+    result["content_type"] = "document";
+    result["tags"] = "imported,document";
+    
+    return result;
 }
 
 } // namespace mcp

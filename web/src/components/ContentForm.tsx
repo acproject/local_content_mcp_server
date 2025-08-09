@@ -15,6 +15,10 @@ import {
   Divider,
   CircularProgress,
   LinearProgress,
+  Card,
+  CardContent,
+  Chip,
+  Autocomplete,
 } from '@mui/material';
 import { 
   Save as SaveIcon, 
@@ -23,7 +27,7 @@ import {
   Description as DocumentIcon 
 } from '@mui/icons-material';
 
-import { ContentAPI, CreateContentRequest, UpdateContentRequest } from '../services/api';
+import { ContentAPI, CreateContentRequest, UpdateContentRequest, OllamaAPI } from '../services/api';
 
 const ContentForm = () => {
   const { id } = useParams<{ id: string }>();
@@ -46,12 +50,33 @@ const ContentForm = () => {
   const [uploading, setUploading] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  
+  // AI服务选择相关状态
+  const [aiService, setAiService] = useState<'llama' | 'ollama'>('llama');
+  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+  const [selectedOllamaModel, setSelectedOllamaModel] = useState<string>('');
 
   useEffect(() => {
     if (isEdit && id) {
       fetchContent(parseInt(id));
     }
+    // 加载Ollama模型列表
+    loadOllamaModels();
   }, [isEdit, id]);
+
+  const loadOllamaModels = async () => {
+    try {
+      const models = await OllamaAPI.getModels();
+      setOllamaModels(models);
+      if (models.length > 0 && !selectedOllamaModel) {
+        setSelectedOllamaModel(models[0]);
+      }
+    } catch (error) {
+      console.warn('Failed to load Ollama models:', error);
+      // 如果无法加载Ollama模型，默认使用LLaMA
+      setAiService('llama');
+    }
+  };
 
   const fetchContent = async (contentId: number) => {
     try {
@@ -176,7 +201,7 @@ const ContentForm = () => {
       
       // 解析文档
       setParsing(true);
-      const parseResult = await ContentAPI.parseDocument(uploadResult.file_path);
+      const parseResult = await ContentAPI.parseDocument(uploadResult.file_path, aiService);
       
       // 填充表单数据
       setFormData({
@@ -228,6 +253,46 @@ const ContentForm = () => {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               上传文档文件，系统将自动解析内容并填充表单
             </Typography>
+            
+            {/* AI服务选择 */}
+            <Box sx={{ mb: 2 }}>
+              <FormControl sx={{ minWidth: 200, mr: 2 }}>
+                <InputLabel>AI处理服务</InputLabel>
+                <Select
+                  value={aiService}
+                  onChange={(e) => setAiService(e.target.value as 'llama' | 'ollama')}
+                  label="AI处理服务"
+                  disabled={uploading || parsing}
+                >
+                  <MenuItem value="llama">LLaMA</MenuItem>
+                  <MenuItem value="ollama">Ollama</MenuItem>
+                </Select>
+              </FormControl>
+              
+              {aiService === 'ollama' && ollamaModels.length > 0 && (
+                <FormControl sx={{ minWidth: 200 }}>
+                  <InputLabel>Ollama模型</InputLabel>
+                  <Select
+                    value={selectedOllamaModel}
+                    onChange={(e) => setSelectedOllamaModel(e.target.value)}
+                    label="Ollama模型"
+                    disabled={uploading || parsing}
+                  >
+                    {ollamaModels.map((model) => (
+                      <MenuItem key={model} value={model}>
+                        {model}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+              
+              {aiService === 'ollama' && ollamaModels.length === 0 && (
+                <Typography variant="body2" color="warning.main">
+                  无法连接到Ollama服务或没有可用模型
+                </Typography>
+              )}
+            </Box>
             
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                <input

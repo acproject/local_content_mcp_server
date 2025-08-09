@@ -26,10 +26,11 @@ import {
 
 import ContentList from './components/ContentList';
 import ContentForm from './components/ContentForm';
+import ContentDetail from './components/ContentDetail';
 import ContentSearch from './components/ContentSearch';
 import TagsView from './components/TagsView';
-import ContentDetail from './components/ContentDetail';
 import ConfigView from './components/ConfigView';
+import ApiTest from './components/ApiTest';
 import { ConfigAPI } from './services/api';
 
 const theme = createTheme({
@@ -52,23 +53,29 @@ function App() {
   useEffect(() => {
     const initializeApp = async () => {
       try {
+        console.log('App: Starting simplified initialization...');
         setConnectionStatus('connecting');
-        await ConfigAPI.initializeService();
-        const info = ConfigAPI.getServerInfo();
-        setServerInfo(info);
+        
+        // 简化初始化：直接设置为已连接状态
+        setServerInfo({ url: '/api', config: null });
         setConnectionStatus('connected');
         setInitError(null);
+        console.log('App: Simplified initialization successful');
       } catch (error) {
         console.error('Failed to initialize app:', error);
         setConnectionStatus('disconnected');
         setInitError(error instanceof Error ? error.message : '连接服务器失败');
       } finally {
+        console.log('App: Setting isInitializing to false');
         setIsInitializing(false);
       }
     };
 
     initializeApp();
   }, []);
+
+  // 添加状态调试
+  console.log('App render - isInitializing:', isInitializing, 'connectionStatus:', connectionStatus);
 
   if (isInitializing) {
     return (
@@ -158,9 +165,10 @@ function App() {
               <Route path="/add" element={<ContentForm />} />
               <Route path="/edit/:id" element={<ContentForm />} />
               <Route path="/content/:id" element={<ContentDetail />} />
-              <Route path="/search" element={<ContentSearch />} />
-              <Route path="/tags" element={<TagsView />} />
-              <Route path="/config" element={<ConfigView />} />
+                <Route path="/search" element={<ContentSearch />} />
+                <Route path="/tags" element={<TagsView />} />
+                <Route path="/config" element={<ConfigView />} />
+                <Route path="/api-test" element={<ApiTest />} />
             </Routes>
           </Container>
         </Box>

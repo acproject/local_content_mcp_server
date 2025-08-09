@@ -147,6 +147,15 @@ export interface ContentListResponse {
   total_pages: number;
 }
 
+// 后端实际返回的格式
+export interface BackendContentListResponse {
+  items: ContentItem[];
+  page: number;
+  page_size: number;
+  total_count: number;
+  total_pages: number;
+}
+
 export interface ServerConfig {
   host: string;
   port: number;
@@ -223,7 +232,30 @@ export class ContentAPI {
 
   static async listContent(page: number = 1, pageSize: number = 10): Promise<ContentListResponse> {
     const response = await api.get(`/content?page=${page}&page_size=${pageSize}`);
-    return response.data;
+    
+    let rawData: any;
+    
+    // 处理后端返回的包装格式 - 后端返回 {data: {...}, success: true}
+    if (response.data && response.data.success && response.data.data) {
+      rawData = response.data.data;
+    } else {
+      // 如果没有包装格式，直接使用数据
+      rawData = response.data;
+    }
+    
+    // 转换后端的 items 字段为前端期望的 content 字段
+    if (rawData && rawData.items) {
+      return {
+        content: rawData.items,
+        page: rawData.page || page,
+        page_size: rawData.page_size || pageSize,
+        total_count: rawData.total_count || 0,
+        total_pages: rawData.total_pages || 0
+      };
+    }
+    
+    // 如果已经是正确格式，直接返回
+    return rawData;
   }
 
   static async createContent(content: CreateContentRequest): Promise<ContentItem> {
@@ -241,22 +273,78 @@ export class ContentAPI {
   }
 
   static async searchContent(query: string): Promise<ContentItem[]> {
-    const response = await api.get(`/content/search?query=${encodeURIComponent(query)}`);
-    return response.data;
+    const response = await api.get(`/content/search?q=${encodeURIComponent(query)}`);
+    
+    let rawData: any;
+    
+    // 处理后端返回的包装格式
+    if (response.data && response.data.success && response.data.data) {
+      rawData = response.data.data;
+    } else {
+      rawData = response.data;
+    }
+    
+    // 处理后端返回的items字段或content字段
+    if (rawData && rawData.items) {
+      return rawData.items;
+    }
+    
+    if (rawData && rawData.content) {
+      return rawData.content;
+    }
+    
+    // 如果直接是数组，返回数组
+    if (Array.isArray(rawData)) {
+      return rawData;
+    }
+    
+    return [];
   }
 
   static async getTags(): Promise<string[]> {
     const response = await api.get('/tags');
+    // 处理后端返回的包装格式
+    if (response.data && response.data.data) {
+      return response.data.data;
+    }
     return response.data;
   }
 
   static async getContentByTag(tag: string): Promise<ContentItem[]> {
-    const response = await api.get(`/content/tag/${encodeURIComponent(tag)}`);
-    return response.data;
+    const response = await api.get(`/content?tags=${encodeURIComponent(tag)}`);
+    
+    let rawData: any;
+    
+    // 处理后端返回的包装格式
+    if (response.data && response.data.success && response.data.data) {
+      rawData = response.data.data;
+    } else {
+      rawData = response.data;
+    }
+    
+    // 处理后端返回的items字段或content字段
+    if (rawData && rawData.items) {
+      return rawData.items;
+    }
+    
+    if (rawData && rawData.content) {
+      return rawData.content;
+    }
+    
+    // 如果直接是数组，返回数组
+    if (Array.isArray(rawData)) {
+      return rawData;
+    }
+    
+    return [];
   }
 
   static async getStats(): Promise<any> {
     const response = await api.get('/stats');
+    // 处理后端返回的包装格式
+    if (response.data && response.data.data) {
+      return response.data.data;
+    }
     return response.data;
   }
 
@@ -278,66 +366,102 @@ export class ContentAPI {
     };
   }
 
-  static async parseDocument(filePath: string): Promise<{ title: string; content: string; content_type: string; tags: string }> {
+  static async parseDocument(filePath: string, aiService?: 'llama' | 'ollama'): Promise<{ title: string; content: string; content_type: string; tags: string }> {
     try {
-      // 首先尝试使用 LLaMA 进行智能解析
-      const response = await api.post('/llama/generate', {
-        prompt: `Please analyze this file: ${filePath} and extract the following information in JSON format:
-{
-  "title": "extracted title",
-  "content": "main content summary",
-  "content_type": "document type",
-  "tags": "comma-separated tags"
-}`,
-        max_tokens: 500
-      });
+      console.log('📄 Parsing document:', filePath, 'with AI service:', aiService);
       
-      // 尝试解析 LLaMA 返回的 JSON
-      const generatedText = response.data.generated_text || response.data.text || '';
-      const jsonMatch = generatedText.match(/\{[^}]+\}/);
+      const requestBody: any = {
+        file_path: filePath
+      };
       
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return {
-          title: parsed.title || 'Untitled Document',
-          content: parsed.content || 'No content extracted',
-          content_type: parsed.content_type || 'document',
-          tags: parsed.tags || ''
-        };
+      if (aiService) {
+        requestBody.ai_service = aiService;
       }
-    } catch (error) {
-      console.warn('LLaMA service unavailable, using basic file analysis:', error);
+      
+      const response = await api.post('/files/parse', requestBody);
+      
+      console.log('✅ Document parsed successfully:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Failed to parse document:', error);
+      
+      if (error.response?.status === 404) {
+        throw new Error('文件未找到');
+      } else if (error.response?.status === 400) {
+        throw new Error(error.response.data?.error || '文件格式不支持');
+      } else if (error.response?.status === 413) {
+        throw new Error('文件过大');
+      } else if (error.response?.status === 500) {
+        throw new Error('服务器内部错误');
+      } else if (error.code === 'ECONNABORTED') {
+        throw new Error('请求超时，请稍后重试');
+      } else if (error.code === 'ERR_NETWORK') {
+        throw new Error('网络连接失败，请检查服务器状态');
+      } else {
+        throw new Error(error.response?.data?.error || error.message || '解析文档失败');
+      }
     }
-    
-    // 如果 LLaMA 不可用，提供基本的文件分析
-    const fileName = filePath.split('/').pop() || 'document';
-    const nameWithoutExt = fileName.replace(/\.[^/.]+$/, '');
-    const fileExt = fileName.split('.').pop()?.toLowerCase() || '';
-    
-    // 根据文件扩展名确定内容类型
-    let contentType = 'document';
-    let tags = 'uploaded';
-    
-    if (['txt', 'md', 'markdown'].includes(fileExt)) {
-      contentType = 'text';
-      tags += ', text, document';
-    } else if (['pdf'].includes(fileExt)) {
-      contentType = 'pdf';
-      tags += ', pdf, document';
-    } else if (['doc', 'docx'].includes(fileExt)) {
-      contentType = 'word';
-      tags += ', word, document';
-    } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
-      contentType = 'image';
-      tags += ', image, media';
+  }
+}
+
+// Ollama API 类
+export class OllamaAPI {
+  static async getModels(): Promise<string[]> {
+    try {
+      console.log('🤖 Getting Ollama models...');
+      const response = await api.get('/ollama/models');
+      console.log('✅ Ollama models retrieved:', response.data);
+      return response.data.models || [];
+    } catch (error: any) {
+      console.error('❌ Failed to get Ollama models:', error);
+      if (error.response?.status === 503) {
+        throw new Error('Ollama 服务未启用或无法连接');
+      }
+      throw new Error(error.response?.data?.error || error.message || '获取 Ollama 模型列表失败');
     }
-    
-    return {
-      title: nameWithoutExt.replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-      content: `Document uploaded: ${fileName}\n\nThis file has been uploaded and is ready for editing. You can modify the title, content, and tags as needed.`,
-      content_type: contentType,
-      tags: tags
-    };
+  }
+
+  static async generate(prompt: string, model?: string, options?: { temperature?: number; max_tokens?: number }): Promise<any> {
+    try {
+      console.log('🤖 Generating with Ollama:', { prompt, model, options });
+      const requestBody: any = {
+        prompt
+      };
+      
+      if (model) {
+        requestBody.model = model;
+      }
+      
+      if (options?.temperature !== undefined) {
+        requestBody.temperature = options.temperature;
+      }
+      
+      if (options?.max_tokens !== undefined) {
+        requestBody.max_tokens = options.max_tokens;
+      }
+      
+      const response = await api.post('/ollama/generate', requestBody);
+      console.log('✅ Ollama generation completed:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Failed to generate with Ollama:', error);
+      if (error.response?.status === 503) {
+        throw new Error('Ollama 服务未启用或无法连接');
+      }
+      throw new Error(error.response?.data?.error || error.message || 'Ollama 生成失败');
+    }
+  }
+
+  static async getStatus(): Promise<any> {
+    try {
+      console.log('🤖 Getting Ollama status...');
+      const response = await api.get('/ollama/status');
+      console.log('✅ Ollama status retrieved:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Failed to get Ollama status:', error);
+      throw new Error(error.response?.data?.error || error.message || '获取 Ollama 状态失败');
+    }
   }
 }
 

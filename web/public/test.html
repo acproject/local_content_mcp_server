@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API连接测试</h1>
+    <div id="results"></div>
+    
+    <script>
+        async function testAPI() {
+            const results = document.getElementById('results');
+            
+            try {
+                // 测试内容列表API
+                console.log('Testing content API...');
+                const contentResponse = await fetch('/api/content?page=1&page_size=10');
+                const contentData = await contentResponse.json();
+                console.log('Content data:', contentData);
+                
+                results.innerHTML += '<h2>内容列表API测试</h2>';
+                results.innerHTML += '<pre>' + JSON.stringify(contentData, null, 2) + '</pre>';
+                
+                // 测试标签API
+                console.log('Testing tags API...');
+                const tagsResponse = await fetch('/api/tags');
+                const tagsData = await tagsResponse.json();
+                console.log('Tags data:', tagsData);
+                
+                results.innerHTML += '<h2>标签API测试</h2>';
+                results.innerHTML += '<pre>' + JSON.stringify(tagsData, null, 2) + '</pre>';
+                
+            } catch (error) {
+                console.error('API test failed:', error);
+                results.innerHTML += '<h2>错误</h2>';
+                results.innerHTML += '<p style="color: red;">' + error.message + '</p>';
+            }
+        }
+        
+        // 页面加载后立即测试
+        window.onload = testAPI;
+    </script>
+</body>
+</html>
