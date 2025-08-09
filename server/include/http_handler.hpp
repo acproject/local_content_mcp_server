@@ -36,6 +36,7 @@ private:
     
     // MCP协议端点
     void handle_mcp_request(const httplib::Request& req, httplib::Response& res);
+    void handle_mcp_api(const httplib::Request& req, httplib::Response& res);
     
     // RESTful API端点
     void handle_get_content(const httplib::Request& req, httplib::Response& res);

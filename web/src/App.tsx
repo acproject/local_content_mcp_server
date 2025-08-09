@@ -22,6 +22,7 @@ import {
   Settings as SettingsIcon,
   CloudDone as ConnectedIcon,
   CloudOff as DisconnectedIcon,
+  Api as ApiIcon,
 } from '@mui/icons-material';
 
 import ContentList from './components/ContentList';
@@ -31,6 +32,7 @@ import ContentSearch from './components/ContentSearch';
 import TagsView from './components/TagsView';
 import ConfigView from './components/ConfigView';
 import ApiTest from './components/ApiTest';
+import MCPInterface from './components/MCPInterface';
 import { ConfigAPI } from './services/api';
 
 const theme = createTheme({
@@ -137,6 +139,9 @@ function App() {
               <Button color="inherit" component={Link} to="/config" startIcon={<SettingsIcon />}>
                 配置
               </Button>
+              <Button color="inherit" component={Link} to="/mcp" startIcon={<ApiIcon />}>
+                MCP接口
+              </Button>
             </Toolbar>
           </AppBar>
 
@@ -169,6 +174,7 @@ function App() {
                 <Route path="/tags" element={<TagsView />} />
                 <Route path="/config" element={<ConfigView />} />
                 <Route path="/api-test" element={<ApiTest />} />
+                <Route path="/mcp" element={<MCPInterface />} />
             </Routes>
           </Container>
         </Box>

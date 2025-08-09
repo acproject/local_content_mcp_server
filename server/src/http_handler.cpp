@@ -82,6 +82,11 @@ void HttpHandler::setup_routes() {
         handle_mcp_request(req, res);
     });
     
+    // MCP API端点（为大语言模型提供）
+    server_->Post("/api/mcp", [this](const httplib::Request& req, httplib::Response& res) {
+        handle_mcp_api(req, res);
+    });
+    
     // RESTful API端点
     server_->Get("/api/content/(\\d+)", [this](const httplib::Request& req, httplib::Response& res) {
         handle_get_content(req, res);
@@ -1448,6 +1453,58 @@ nlohmann::json HttpHandler::create_default_parse_result(const std::string& conte
     result["tags"] = "imported,document";
     
     return result;
+}
+
+void HttpHandler::handle_mcp_api(const httplib::Request& req, httplib::Response& res) {
+    spdlog::info("Received MCP API request from: {}", req.remote_addr);
+    
+    try {
+        nlohmann::json request_json;
+        std::string error_msg;
+        
+        if (!parse_json_body(req.body, request_json, error_msg)) {
+            send_error_response(res, "Invalid JSON: " + error_msg, 400);
+            return;
+        }
+        
+        // 验证请求格式
+        if (!request_json.contains("method") || !request_json.contains("params")) {
+            send_error_response(res, "Missing required fields: method and params", 400);
+            return;
+        }
+        
+        std::string method = request_json["method"];
+        nlohmann::json params = request_json["params"];
+        
+        // 构造标准MCP请求
+        nlohmann::json mcp_request;
+        mcp_request["jsonrpc"] = "2.0";
+        mcp_request["id"] = request_json.value("id", 1);
+        mcp_request["method"] = method;
+        mcp_request["params"] = params;
+        
+        // 调用MCP服务器处理请求
+        auto response_json = mcp_server_->handle_request(mcp_request);
+        
+        // 为大语言模型优化响应格式
+        nlohmann::json api_response;
+        api_response["success"] = !response_json.contains("error");
+        
+        if (response_json.contains("error")) {
+            api_response["error"] = response_json["error"];
+        } else {
+            api_response["result"] = response_json.value("result", nlohmann::json::object());
+        }
+        
+        api_response["method"] = method;
+        api_response["timestamp"] = std::time(nullptr);
+        
+        send_json_response(res, api_response);
+        
+    } catch (const std::exception& e) {
+        spdlog::error("Error handling MCP API request: {}", e.what());
+        send_error_response(res, "Internal server error: " + std::string(e.what()), 500);
+    }
 }
 
 } // namespace mcp
