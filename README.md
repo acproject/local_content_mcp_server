@@ -378,4 +378,4 @@ grep "response_time" logs/server.log
 
 ---
 
-**注意**: 这是一个本地内容管理系统，主要用于开发和测试环境。在生产环境中使用时，请确保适当的安全配置。另外在windows下cmake需要加上-DJSON_BuildTests=OFF参数禁止测试第三方的库。
+**注意**: 这是一个本地内容管理系统，主要用于开发和测试环境。在生产环境中使用时，请确保适当的安全配置。另外在windows下cmake需要加上-DJSON_BuildTests=OFF参数禁止测试第三方的库。可以通过命令像这样 cmake .. -DCMAKE_TOOLCHAIN_FILE=D:\vcpkg\scripts\buildsystems\vcpkg.cmake -G "Visual Studio 17 2022" -DJSON_BuildTests=OFF -DSQLITE_ENABLE_FTS5=ON
