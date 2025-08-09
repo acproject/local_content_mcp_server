@@ -6,8 +6,13 @@
 #include <sstream>
 #include <regex>
 #include <cstdlib>
+#ifdef _WIN32
+#include <windows.h>
+#include <io.h>
+#else
 #include <sys/wait.h>
 #include <unistd.h>
+#endif
 #include <fcntl.h>
 #include <mutex>
 
@@ -142,14 +147,22 @@ bool LlamaClient::load_model(const std::string& model_path) {
     }
     
     // 检查模型文件是否存在
+    #ifdef _WIN32
+    if (_access(model_path.c_str(), 0) != 0) {
+#else
     if (access(model_path.c_str(), F_OK) != 0) {
+#endif
         spdlog::error("Model file not found: {}", model_path);
         return false;
     }
     
     // 检查llama.cpp可执行文件是否存在
     std::string executable_path = config.get_llama_executable_path();
+    #ifdef _WIN32
+    if (_access(executable_path.c_str(), 0) != 0) {
+#else
     if (access(executable_path.c_str(), X_OK) != 0) {
+#endif
         spdlog::error("LLaMA executable not found or not executable: {}", executable_path);
         return false;
     }
@@ -217,7 +230,11 @@ LlamaResponse LlamaClient::generate(const LlamaRequest& request) {
         spdlog::debug("Executing LLaMA command: {}", command);
         
         // 使用popen执行命令并捕获输出
+        #ifdef _WIN32
+        FILE* pipe = _popen(command.c_str(), "r");
+#else
         FILE* pipe = popen(command.c_str(), "r");
+#endif
         if (!pipe) {
             response.error_message = "Failed to execute LLaMA command";
             return response;
@@ -229,7 +246,11 @@ LlamaResponse LlamaClient::generate(const LlamaRequest& request) {
             output += buffer;
         }
         
+        #ifdef _WIN32
+        int exit_code = _pclose(pipe);
+#else
         int exit_code = pclose(pipe);
+#endif
         
         auto end_time = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
@@ -318,13 +339,21 @@ bool LlamaClient::health_check() {
     
     // 检查可执行文件
     std::string executable_path = config.get_llama_executable_path();
+#ifdef _WIN32
+    if (_access(executable_path.c_str(), 0) != 0) {
+#else
     if (access(executable_path.c_str(), X_OK) != 0) {
+#endif
         return false;
     }
     
     // 检查模型文件（如果已加载）
     if (pimpl_->model_loaded_) {
+#ifdef _WIN32
+        if (_access(pimpl_->model_path_.c_str(), 0) != 0) {
+#else
         if (access(pimpl_->model_path_.c_str(), F_OK) != 0) {
+#endif
             return false;
         }
     }
