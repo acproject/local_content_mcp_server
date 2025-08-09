@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "local-content-server": {
+      "command": "node",
+      "args": [
+        "/Users/acproject/workspace/cpp_projects/local_content_mcp_server/mcp_bridge.js"
+      ],
+      "env": {
+        "MCP_SERVER_URL": "http://localhost:8080"
+      }
+    }
+  }
+}
