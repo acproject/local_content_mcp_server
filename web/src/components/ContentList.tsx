@@ -139,7 +139,9 @@ const ContentList = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('zh-CN');
+    // 后端返回的是Unix时间戳，需要转换为毫秒
+    const timestamp = parseInt(dateString) * 1000;
+    return new Date(timestamp).toLocaleString('zh-CN');
   };
 
   const formatTags = (tags: string) => {
