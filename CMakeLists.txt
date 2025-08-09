@@ -54,27 +54,27 @@ FetchContent_Declare(
     GIT_TAG v0.14.3
 )
 FetchContent_MakeAvailable(httplib)
-if(WIN32)
-    # SQLite3
-    FetchContent_Declare(
-        sqlite3
-        URL https://www.sqlite.org/2023/sqlite-amalgamation-3440200.zip
-        URL_HASH SHA256=5b11b63483b7e44a673b9534a8a264522b3cee40250a444a105b968f8d331a33
-    )
-    FetchContent_MakeAvailable(sqlite3)
+# if(WIN32)
+#     # SQLite3
+#     FetchContent_Declare(
+#         sqlite3
+#         URL https://www.sqlite.org/2023/sqlite-amalgamation-3440200.zip
+#         URL_HASH SHA256=5b11b63483b7e44a673b9534a8a264522b3cee40250a444a105b968f8d331a33
+#     )
+#     FetchContent_MakeAvailable(sqlite3)
 
-    add_library(sqlite3_lib STATIC
-        ${sqlite3_SOURCE_DIR}/sqlite3.c
-        ${sqlite3_SOURCE_DIR}/sqlite3.h
-    )
-    target_compile_definitions(sqlite3_lib PUBLIC -DSQLITE_ENABLE_FTS5)
-    target_include_directories(sqlite3_lib PUBLIC ${sqlite3_SOURCE_DIR})
-else()
-    find_package(SQLite3 REQUIRED)
-    if(NOT SQLite3_FOUND)
-        message(FATAL_ERROR "SQLite3 not found")
-    endif()
+#     add_library(sqlite3_lib STATIC
+#         ${sqlite3_SOURCE_DIR}/sqlite3.c
+#         ${sqlite3_SOURCE_DIR}/sqlite3.h
+#     )
+#     target_compile_definitions(sqlite3_lib PUBLIC -DSQLITE_ENABLE_FTS5)
+#     target_include_directories(sqlite3_lib PUBLIC ${sqlite3_SOURCE_DIR})
+# else()
+find_package(SQLite3 REQUIRED)
+if(NOT SQLite3_FOUND)
+    message(FATAL_ERROR "SQLite3 not found")
 endif()
+# endif()
 
 if(BUILD_TESTS)
     FetchContent_Declare(
