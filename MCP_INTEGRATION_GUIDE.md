@@ -54,7 +54,7 @@ make build
     "local-content-server": {
       "command": "node",
       "args": [
-        "~/local_content_mcp_server/mcp_bridge.js"
+        "~/local_content_mcp_server/web/mcp_bridge.js"
       ],
       "env": {
         "MCP_SERVER_URL": "http://localhost:8080"
@@ -64,7 +64,7 @@ make build
 }
 ```
 
-**注意**: 请将路径 `~/local_content_mcp_server/mcp_bridge.js` 替换为你的实际项目路径。
+**注意**: 请将路径 `~/local_content_mcp_server/web/mcp_bridge.js` 替换为你的实际项目路径。
 
 #### 对于其他 MCP 客户端
 

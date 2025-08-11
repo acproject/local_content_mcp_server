@@ -1493,7 +1493,16 @@ void HttpHandler::handle_mcp_api(const httplib::Request& req, httplib::Response&
         if (response_json.contains("error")) {
             api_response["error"] = response_json["error"];
         } else {
-            api_response["result"] = response_json.value("result", nlohmann::json::object());
+            // 处理 tools/call 方法的特殊响应格式
+            if (method == "tools/call" && response_json.contains("content") && 
+                response_json["content"].is_array() && !response_json["content"].empty()) {
+                // 从 content 数组中提取实际的工具结果
+                auto content_text = response_json["content"][0]["text"].get<std::string>();
+                auto content_json = nlohmann::json::parse(content_text);
+                api_response["result"] = content_json;
+            } else {
+                api_response["result"] = response_json.value("result", nlohmann::json::object());
+            }
         }
         
         api_response["method"] = method;
