@@ -5,6 +5,7 @@
 #include <fstream>
 #include <filesystem>
 #include <string>
+#include <algorithm>
 
 namespace mcp {
 
@@ -1420,9 +1421,95 @@ void HttpHandler::handle_parse_document(const httplib::Request& req, httplib::Re
             }
             
             try {
-                // 这里应该调用Ollama API进行文档解析
-                // 目前先返回默认结果
-                parse_result = create_default_parse_result(content, file_path);
+                // 调用Ollama API进行文档解析
+                std::string ollama_host = config.get_ollama_host();
+                int ollama_port = config.get_ollama_port();
+                std::string ollama_model = config.get_ollama_model();
+                
+                // 创建HTTP客户端
+                httplib::Client client(ollama_host, ollama_port);
+                client.set_connection_timeout(5, 0);
+                client.set_read_timeout(60, 0); // 文档解析可能需要更长时间
+                
+                // 准备Ollama请求
+                nlohmann::json ollama_request;
+                ollama_request["model"] = ollama_model;
+                ollama_request["prompt"] = prompt;
+                ollama_request["stream"] = false;
+                ollama_request["options"] = {
+                    {"temperature", config.get_ollama_temperature()},
+                    {"num_predict", config.get_ollama_max_tokens()}
+                };
+                
+                // 发送请求到Ollama
+                auto result = client.Post("/api/generate", ollama_request.dump(), "application/json");
+                
+                if (result && result->status == 200) {
+                    // 解析Ollama响应
+                    nlohmann::json ollama_response = nlohmann::json::parse(result->body);
+                    
+                    if (ollama_response.contains("response") && !ollama_response["response"].get<std::string>().empty()) {
+                        std::string ollama_text = ollama_response["response"];
+                        
+                        // 尝试解析Ollama返回的JSON
+                        try {
+                            // 查找JSON内容（可能被其他文本包围）
+                            size_t json_start = ollama_text.find("{");
+                            size_t json_end = ollama_text.rfind("}");
+                            
+                            if (json_start != std::string::npos && json_end != std::string::npos && json_end > json_start) {
+                                std::string json_str = ollama_text.substr(json_start, json_end - json_start + 1);
+                                parse_result = nlohmann::json::parse(json_str);
+                                
+                                // 验证必要字段
+                                if (!parse_result.contains("title") || !parse_result.contains("content") || 
+                                    !parse_result.contains("content_type") || !parse_result.contains("tags")) {
+                                    throw std::runtime_error("Missing required fields in Ollama response");
+                                }
+                            } else {
+                                throw std::runtime_error("No valid JSON found in Ollama response");
+                            }
+                        } catch (const std::exception& e) {
+                            spdlog::warn("Failed to parse Ollama JSON response: {}", e.what());
+                            // 如果JSON解析失败，尝试从响应中提取标题
+                            parse_result = create_default_parse_result(content, file_path);
+                            
+                            // 尝试从Ollama响应中提取更好的标题
+                            std::string lower_text = ollama_text;
+                            std::transform(lower_text.begin(), lower_text.end(), lower_text.begin(), ::tolower);
+                            
+                            size_t title_pos = lower_text.find("title");
+                            if (title_pos != std::string::npos) {
+                                // 简单的标题提取逻辑
+                                size_t start = ollama_text.find(":", title_pos);
+                                if (start != std::string::npos) {
+                                    start++;
+                                    size_t end = ollama_text.find("\n", start);
+                                    if (end == std::string::npos) end = ollama_text.length();
+                                    
+                                    std::string extracted_title = ollama_text.substr(start, end - start);
+                                    // 清理标题
+                                    extracted_title.erase(0, extracted_title.find_first_not_of(" \t\"'"));
+                                    extracted_title.erase(extracted_title.find_last_not_of(" \t\"',") + 1);
+                                    
+                                    if (!extracted_title.empty() && extracted_title.length() > 3) {
+                                        parse_result["title"] = extracted_title;
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        spdlog::warn("Empty response from Ollama");
+                        parse_result = create_default_parse_result(content, file_path);
+                    }
+                } else {
+                    std::string error_msg = "Failed to connect to Ollama service";
+                    if (result) {
+                        error_msg += " (HTTP " + std::to_string(result->status) + ")";
+                    }
+                    spdlog::warn(error_msg);
+                    parse_result = create_default_parse_result(content, file_path);
+                }
             } catch (const std::exception& e) {
                 spdlog::warn("Ollama parsing failed: {}", e.what());
                 parse_result = create_default_parse_result(content, file_path);

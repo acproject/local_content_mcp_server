@@ -52,7 +52,7 @@ const ContentForm = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   
   // AI服务选择相关状态
-  const [aiService, setAiService] = useState<'llama' | 'ollama'>('llama');
+  const [aiService, setAiService] = useState<'ollama'>('ollama');
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [selectedOllamaModel, setSelectedOllamaModel] = useState<string>('');
 
@@ -73,8 +73,7 @@ const ContentForm = () => {
       }
     } catch (error) {
       console.warn('Failed to load Ollama models:', error);
-      // 如果无法加载Ollama模型，默认使用LLaMA
-      setAiService('llama');
+      // 如果无法加载Ollama模型，保持ollama设置
     }
   };
 
@@ -260,11 +259,10 @@ const ContentForm = () => {
                 <InputLabel>AI处理服务</InputLabel>
                 <Select
                   value={aiService}
-                  onChange={(e) => setAiService(e.target.value as 'llama' | 'ollama')}
+                  onChange={(e) => setAiService(e.target.value as 'ollama')}
                   label="AI处理服务"
                   disabled={uploading || parsing}
                 >
-                  <MenuItem value="llama">LLaMA</MenuItem>
                   <MenuItem value="ollama">Ollama</MenuItem>
                 </Select>
               </FormControl>

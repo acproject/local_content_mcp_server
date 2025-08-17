@@ -370,7 +370,7 @@ export class ContentAPI {
     };
   }
 
-  static async parseDocument(filePath: string, aiService?: 'llama' | 'ollama'): Promise<{ title: string; content: string; content_type: string; tags: string }> {
+  static async parseDocument(filePath: string, aiService?: 'ollama'): Promise<{ title: string; content: string; content_type: string; tags: string }> {
     try {
       console.log('📄 Parsing document:', filePath, 'with AI service:', aiService);
       
