@@ -1530,11 +1530,57 @@ void HttpHandler::handle_parse_document(const httplib::Request& req, httplib::Re
 nlohmann::json HttpHandler::create_default_parse_result(const std::string& content, const std::string& file_path) {
     nlohmann::json result;
     
-    // 从文件路径提取标题
+    // 尝试从metadata.json中获取原始文件名
+    std::string title;
     std::filesystem::path path(file_path);
     std::string filename = path.stem().string();
     
-    result["title"] = filename;
+    // 检查是否是uploads目录中的hash命名文件
+    if (file_path.find("/uploads/") != std::string::npos || file_path.find("\\uploads\\") != std::string::npos) {
+        // 尝试从metadata.json读取原始文件名
+        std::string metadata_path = path.parent_path().string() + "/metadata.json";
+        if (std::filesystem::exists(metadata_path)) {
+            try {
+                std::ifstream metadata_file(metadata_path);
+                if (metadata_file.is_open()) {
+                    nlohmann::json metadata;
+                    metadata_file >> metadata;
+                    metadata_file.close();
+                    
+                    // 查找匹配的文件ID
+                    if (metadata.contains("files") && metadata["files"].is_array()) {
+                        for (const auto& file_info : metadata["files"]) {
+                            if (file_info.contains("id") && file_info["id"].get<std::string>() == filename) {
+                                if (file_info.contains("original_name")) {
+                                    title = file_info["original_name"].get<std::string>();
+                                    // 移除文件扩展名作为标题
+                                    size_t dot_pos = title.find_last_of(".");
+                                    if (dot_pos != std::string::npos) {
+                                        title = title.substr(0, dot_pos);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (const std::exception& e) {
+                spdlog::warn("Failed to read metadata.json: {}", e.what());
+            }
+        }
+    }
+    
+    // 如果没有找到原始文件名，使用文件名或生成默认标题
+    if (title.empty()) {
+        if (filename.length() > 20 && filename.find_first_not_of("0123456789abcdef") == std::string::npos) {
+            // 如果是长hash码，生成更友好的标题
+            title = "Uploaded Document";
+        } else {
+            title = filename;
+        }
+    }
+    
+    result["title"] = title;
     result["content"] = content;
     result["content_type"] = "document";
     result["tags"] = "imported,document";
