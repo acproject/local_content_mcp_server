@@ -47,13 +47,7 @@ const ConfigView: React.FC = () => {
     max_file_size: 10485760,
     allowed_file_types: [],
     enable_file_upload: true,
-    llama_model_path: '',
-    llama_executable_path: './llama.cpp/main',
-    llama_context_size: 2048,
-    llama_threads: 4,
-    llama_temperature: 0.7,
-    llama_max_tokens: 512,
-    enable_llama: false,
+
     ollama_host: 'localhost',
     ollama_port: 11434,
     ollama_model: 'llama2',
@@ -92,8 +86,8 @@ const ConfigView: React.FC = () => {
     setConfig(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : 
-              ['port', 'max_content_size', 'default_page_size', 'max_page_size', 'max_file_size', 'llama_context_size', 'llama_threads', 'llama_max_tokens', 'ollama_port', 'ollama_max_tokens', 'ollama_timeout'].includes(name) ? parseInt(value) || 0 :
-              ['llama_temperature', 'ollama_temperature'].includes(name) ? Math.round((parseFloat(value) || 0) * 100) / 100 :
+              ['port', 'max_content_size', 'default_page_size', 'max_page_size', 'max_file_size', 'ollama_port', 'ollama_max_tokens', 'ollama_timeout'].includes(name) ? parseInt(value) || 0 :
+              ['ollama_temperature'].includes(name) ? Math.round((parseFloat(value) || 0) * 100) / 100 :
               value,
     }));
   };
@@ -501,109 +495,7 @@ const ConfigView: React.FC = () => {
             </AccordionDetails>
           </Accordion>
 
-          {/* LLaMA配置 */}
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">LLaMA AI配置</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={config.enable_llama}
-                        onChange={handleInputChange}
-                        name="enable_llama"
-                        disabled={saving}
-                      />
-                    }
-                    label="启用LLaMA AI功能"
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="LLaMA模型路径"
-                    name="llama_model_path"
-                    value={config.llama_model_path}
-                    onChange={handleInputChange}
-                    margin="normal"
-                    disabled={saving || !config.enable_llama}
-                    helperText="LLaMA模型文件的路径"
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="LLaMA可执行文件路径"
-                    name="llama_executable_path"
-                    value={config.llama_executable_path}
-                    onChange={handleInputChange}
-                    margin="normal"
-                    disabled={saving || !config.enable_llama}
-                    helperText="LLaMA可执行文件的路径"
-                  />
-                </Grid>
-                <Grid item xs={12} md={3}>
-                  <TextField
-                    fullWidth
-                    label="上下文大小"
-                    name="llama_context_size"
-                    type="number"
-                    value={config.llama_context_size}
-                    onChange={handleInputChange}
-                    margin="normal"
-                    disabled={saving || !config.enable_llama}
-                    inputProps={{ min: 512, max: 8192 }}
-                    helperText="LLaMA的上下文窗口大小"
-                  />
-                </Grid>
-                <Grid item xs={12} md={3}>
-                  <TextField
-                    fullWidth
-                    label="线程数"
-                    name="llama_threads"
-                    type="number"
-                    value={config.llama_threads}
-                    onChange={handleInputChange}
-                    margin="normal"
-                    disabled={saving || !config.enable_llama}
-                    inputProps={{ min: 1, max: 32 }}
-                    helperText="LLaMA使用的线程数"
-                  />
-                </Grid>
-                <Grid item xs={12} md={3}>
-                  <TextField
-                    fullWidth
-                    label="温度"
-                    name="llama_temperature"
-                    type="number"
-                    value={Math.round(config.llama_temperature * 100) / 100}
-                    onChange={handleInputChange}
-                    margin="normal"
-                    disabled={saving || !config.enable_llama}
-                    inputProps={{ min: 0, max: 2, step: 0.1 }}
-                    helperText="生成文本的随机性，0-2"
-                  />
-                </Grid>
-                <Grid item xs={12} md={3}>
-                  <TextField
-                    fullWidth
-                    label="最大令牌数"
-                    name="llama_max_tokens"
-                    type="number"
-                    value={config.llama_max_tokens}
-                    onChange={handleInputChange}
-                    margin="normal"
-                    disabled={saving || !config.enable_llama}
-                    inputProps={{ min: 1, max: 2048 }}
-                    helperText="生成文本的最大令牌数"
-                  />
-                </Grid>
-              </Grid>
-            </AccordionDetails>
-          </Accordion>
+
 
           {/* Ollama配置 */}
           <Accordion>

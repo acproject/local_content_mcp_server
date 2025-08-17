@@ -173,13 +173,7 @@ export interface ServerConfig {
   max_file_size: number;
   allowed_file_types: string[];
   enable_file_upload: boolean;
-  llama_model_path: string;
-  llama_executable_path: string;
-  llama_context_size: number;
-  llama_threads: number;
-  llama_temperature: number;
-  llama_max_tokens: number;
-  enable_llama: boolean;
+
   ollama_host: string;
   ollama_port: number;
   ollama_model: string;
