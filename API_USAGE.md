@@ -78,7 +78,7 @@ curl -X POST "http://localhost:8080/api/mcp" \
       "arguments": {
         "title": "测试文档",
         "content": "这是一个测试文档的内容",
-        "content_type": "document",
+        "content_type": "text",
         "tags": "test,document"
       }
     },
@@ -119,6 +119,27 @@ curl -X POST "http://localhost:8080/api/mcp" \
       }
     },
     "id": 5
+  }'
+```
+
+#### 更新内容
+
+```bash
+curl -X POST "http://localhost:8080/api/mcp" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "method": "tools/call",
+    "params": {
+      "name": "update_content",
+      "arguments": {
+        "id": 1,
+        "title": "更新后的测试文档",
+        "content": "这是更新后的内容",
+        "content_type": "text",
+        "tags": "test,updated"
+      }
+    },
+    "id": 6
   }'
 ```
 

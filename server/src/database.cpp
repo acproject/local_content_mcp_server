@@ -37,6 +37,9 @@ ContentItem ContentItem::from_json(const nlohmann::json& j) {
     item.title = j.value("title", "");
     item.content = j.value("content", "");
     item.content_type = j.value("content_type", "text");
+    if (item.content_type == "document") {
+        item.content_type = "text";
+    }
     item.tags = j.value("tags", "");
     
     // 处理metadata
