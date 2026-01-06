@@ -128,7 +128,7 @@ nlohmann::json Config::to_json() const {
 
 void Config::load_defaults() {
     host_ = "127.0.0.1";
-    port_ = 8080;
+    port_ = 8086;
     database_path_ = "./data/content.db";
     log_level_ = "info";
     log_file_ = "";
