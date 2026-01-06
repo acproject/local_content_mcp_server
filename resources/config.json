@@ -29,7 +29,7 @@
     "ollama_port": 11434,
     "ollama_temperature": 0.699999988079071,
     "ollama_timeout": 30,
-    "port": 8080,
+    "port": 8086,
     "static_files_path": "./web",
     "upload_path": "./uploads"
 }

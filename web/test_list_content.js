@@ -4,7 +4,7 @@ import fetch from 'node-fetch';
 
 // 测试 list_content 功能
 async function testListContent() {
-  const serverUrl = process.env.MCP_SERVER_URL || 'http://localhost:8080';
+  const serverUrl = process.env.MCP_SERVER_URL || 'http://localhost:8086';
   
   console.log('正在测试 list_content 功能...');
   console.log(`服务器地址: ${serverUrl}`);
@@ -55,7 +55,7 @@ async function testListContent() {
     console.error('❌ 测试过程中发生错误:');
     console.error(error.message);
     console.error('\n请确保:');
-    console.error('1. 本地内容服务器正在运行 (http://localhost:8080)');
+    console.error('1. 本地内容服务器正在运行 (http://localhost:8086)');
     console.error('2. 服务器配置正确');
     console.error('3. 网络连接正常');
   }

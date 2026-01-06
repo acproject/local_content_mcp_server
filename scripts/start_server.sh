@@ -169,7 +169,7 @@ start_server() {
         # 检查服务器是否响应
         local count=0
         while [ $count -lt 10 ]; do
-            if curl -s http://localhost:8080/health > /dev/null 2>&1; then
+            if curl -s http://localhost:8086/health > /dev/null 2>&1; then
                 log_success "服务器健康检查通过"
                 return 0
             fi
@@ -209,7 +209,7 @@ show_status() {
         fi
         
         # 检查健康状态
-        if curl -s http://localhost:8080/health > /dev/null 2>&1; then
+        if curl -s http://localhost:8086/health > /dev/null 2>&1; then
             log_success "服务器健康状态: 正常"
         else
             log_warn "服务器健康状态: 异常"

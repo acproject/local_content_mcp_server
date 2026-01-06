@@ -11,7 +11,7 @@ PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 # 配置
 BUILD_DIR="${PROJECT_DIR}/build"
 CLIENT_BINARY="${BUILD_DIR}/client/mcp_client"
-SERVER_URL="http://localhost:8080"
+SERVER_URL="http://localhost:8086"
 CONFIG_FILE="${PROJECT_DIR}/config/client.json"
 
 # 颜色输出
@@ -217,7 +217,7 @@ show_help() {
     echo "  help        显示帮助信息"
     echo ""
     echo "选项:"
-    echo "  --server <url>  指定服务器URL (默认: http://localhost:8080)"
+    echo "  --server <url>  指定服务器URL (默认: http://localhost:8086)"
     echo "  --verbose       详细输出"
     echo "  --no-cleanup    测试后不清理数据"
     echo ""

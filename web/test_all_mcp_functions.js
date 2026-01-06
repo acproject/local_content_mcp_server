@@ -61,7 +61,7 @@ function runTestFile(testFile) {
  */
 async function checkServer() {
     const fetch = (await import('node-fetch')).default;
-    const SERVER_URL = 'http://localhost:8080';
+    const SERVER_URL = 'http://localhost:8086';
     
     try {
         const response = await fetch(`${SERVER_URL}/api/mcp`, {
@@ -97,7 +97,7 @@ async function runAllTests() {
     // 检查服务器状态
     console.log('🔍 检查服务器状态...');
     console.log('⚠️  跳过服务器检查，直接运行测试');
-    console.log('   如果测试失败，请确保 MCP 服务器正在 http://localhost:8080 上运行');
+    console.log('   如果测试失败，请确保 MCP 服务器正在 http://localhost:8086 上运行');
     
     // 运行所有测试文件
     const results = [];

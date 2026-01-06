@@ -39,7 +39,7 @@ npm start
 
 ### 3. 确保后端服务运行
 
-确保内容管理服务器在 http://localhost:8080 运行
+确保内容管理服务器在 http://localhost:8086 运行
 
 ## 可用脚本
 
@@ -107,13 +107,13 @@ web/
 在 `.env` 文件中配置：
 
 ```
-REACT_APP_API_URL=http://localhost:8080/api
+REACT_APP_API_URL=http://localhost:8086/api
 PORT=3000
 ```
 
 ### API配置
 
-默认API地址为 `http://localhost:8080/api`，可通过环境变量 `REACT_APP_API_URL` 修改。
+默认API地址为 `http://localhost:8086/api`，可通过环境变量 `REACT_APP_API_URL` 修改。
 
 ## 部署
 

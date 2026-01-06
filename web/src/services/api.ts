@@ -3,7 +3,7 @@ import axios from 'axios';
 // 动态配置管理
 class ConfigService {
   private static instance: ConfigService;
-  private apiBaseUrl: string = process.env.NODE_ENV === 'development' ? '/api' : 'http://localhost:8080/api'; // 开发环境使用代理
+  private apiBaseUrl: string = process.env.NODE_ENV === 'development' ? '/api' : 'http://localhost:8086/api'; // 开发环境使用代理
   private serverConfig: ServerConfig | null = null;
 
   private constructor() {}
@@ -37,7 +37,7 @@ class ConfigService {
       }
       
       // 尝试从多个可能的端口获取服务器信息
-      const possiblePorts = [8080, 5555, 3001, 8000];
+      const possiblePorts = [8086, 5555, 3001, 8000];
       const possibleHosts = ['localhost', '127.0.0.1'];
       
       for (const host of possibleHosts) {
@@ -70,8 +70,8 @@ class ConfigService {
         this.apiBaseUrl = envUrl;
         console.log(`Using API URL from environment: ${envUrl}`);
       } else {
-        console.warn('⚠️ Could not auto-detect server, using default URL: http://localhost:8080/api');
-        this.apiBaseUrl = 'http://localhost:8080/api';
+        console.warn('⚠️ Could not auto-detect server, using default URL: http://localhost:8086/api');
+        this.apiBaseUrl = 'http://localhost:8086/api';
       }
     } catch (error) {
       console.error('❌ Failed to initialize config service:', error);

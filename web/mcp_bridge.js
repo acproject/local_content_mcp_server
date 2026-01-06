@@ -20,7 +20,7 @@ class LocalContentMCPServer {
       }
     );
 
-    this.mcpServerUrl = process.env.MCP_SERVER_URL || 'http://localhost:8080';
+    this.mcpServerUrl = process.env.MCP_SERVER_URL || 'http://localhost:8086';
     this.setupToolHandlers();
     this.setupResourceHandlers();
   }

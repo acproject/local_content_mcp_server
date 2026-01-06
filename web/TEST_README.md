@@ -49,7 +49,7 @@
    ./build/server/mcp_server
    ```
 
-2. 服务器默认运行在 `http://localhost:8080`
+2. 服务器默认运行在 `http://localhost:8086`
 
 ### 运行单独测试
 

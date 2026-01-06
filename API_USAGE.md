@@ -6,7 +6,7 @@
 
 ## API 端点
 
-**URL**: `POST http://localhost:8080/api/mcp`
+**URL**: `POST http://localhost:8086/api/mcp`
 
 **Content-Type**: `application/json`
 
@@ -40,7 +40,7 @@
 ### 1. 初始化连接
 
 ```bash
-curl -X POST "http://localhost:8080/api/mcp" \
+curl -X POST "http://localhost:8086/api/mcp" \
   -H "Content-Type: application/json" \
   -d '{
     "method": "initialize",
@@ -55,7 +55,7 @@ curl -X POST "http://localhost:8080/api/mcp" \
 ### 2. 获取可用工具列表
 
 ```bash
-curl -X POST "http://localhost:8080/api/mcp" \
+curl -X POST "http://localhost:8086/api/mcp" \
   -H "Content-Type: application/json" \
   -d '{
     "method": "tools/list",
@@ -69,7 +69,7 @@ curl -X POST "http://localhost:8080/api/mcp" \
 #### 创建内容
 
 ```bash
-curl -X POST "http://localhost:8080/api/mcp" \
+curl -X POST "http://localhost:8086/api/mcp" \
   -H "Content-Type: application/json" \
   -d '{
     "method": "tools/call",
@@ -89,7 +89,7 @@ curl -X POST "http://localhost:8080/api/mcp" \
 #### 搜索内容
 
 ```bash
-curl -X POST "http://localhost:8080/api/mcp" \
+curl -X POST "http://localhost:8086/api/mcp" \
   -H "Content-Type: application/json" \
   -d '{
     "method": "tools/call",
@@ -108,7 +108,7 @@ curl -X POST "http://localhost:8080/api/mcp" \
 #### 获取内容
 
 ```bash
-curl -X POST "http://localhost:8080/api/mcp" \
+curl -X POST "http://localhost:8086/api/mcp" \
   -H "Content-Type: application/json" \
   -d '{
     "method": "tools/call",
@@ -125,7 +125,7 @@ curl -X POST "http://localhost:8080/api/mcp" \
 #### 更新内容
 
 ```bash
-curl -X POST "http://localhost:8080/api/mcp" \
+curl -X POST "http://localhost:8086/api/mcp" \
   -H "Content-Type: application/json" \
   -d '{
     "method": "tools/call",
@@ -146,7 +146,7 @@ curl -X POST "http://localhost:8080/api/mcp" \
 ### 4. 获取资源列表
 
 ```bash
-curl -X POST "http://localhost:8080/api/mcp" \
+curl -X POST "http://localhost:8086/api/mcp" \
   -H "Content-Type: application/json" \
   -d '{
     "method": "resources/list",
@@ -158,7 +158,7 @@ curl -X POST "http://localhost:8080/api/mcp" \
 ### 5. 读取资源
 
 ```bash
-curl -X POST "http://localhost:8080/api/mcp" \
+curl -X POST "http://localhost:8086/api/mcp" \
   -H "Content-Type: application/json" \
   -d '{
     "method": "resources/read",

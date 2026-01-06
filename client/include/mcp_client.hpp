@@ -22,7 +22,7 @@ struct MCPResponse {
 // MCP客户端配置
 struct MCPClientConfig {
     std::string server_host = "localhost";
-    int server_port = 8080;
+    int server_port = 8086;
     std::string base_path = "/mcp";
     int timeout_seconds = 30;
     bool enable_ssl = false;

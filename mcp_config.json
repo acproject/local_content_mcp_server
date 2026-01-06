@@ -6,7 +6,7 @@
         "~/local_content_mcp_server/mcp_bridge.js"
       ],
       "env": {
-        "MCP_SERVER_URL": "http://localhost:8080"
+        "MCP_SERVER_URL": "http://localhost:8086"
       }
     }
   }

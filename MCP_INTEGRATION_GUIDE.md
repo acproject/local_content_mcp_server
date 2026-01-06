@@ -36,7 +36,7 @@ make build
 ./build/server/mcp_server ./resources/config.json
 ```
 
-服务器将在 `http://localhost:8080` 上运行。
+服务器将在 `http://localhost:8086` 上运行。
 
 ### 3. 配置 MCP 客户端
 
@@ -57,7 +57,7 @@ make build
         "~/local_content_mcp_server/web/mcp_bridge.js"
       ],
       "env": {
-        "MCP_SERVER_URL": "http://localhost:8080"
+        "MCP_SERVER_URL": "http://localhost:8086"
       }
     }
   }
@@ -149,7 +149,7 @@ AI: 我来为你创建这个笔记...
 - 重启 MCP 客户端
 
 ### 2. 连接错误
-- 确认服务器 URL 配置正确（默认: http://localhost:8080）
+- 确认服务器 URL 配置正确（默认: http://localhost:8086）
 - 检查防火墙设置
 - 查看服务器日志
 

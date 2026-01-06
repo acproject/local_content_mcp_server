@@ -51,11 +51,11 @@ RUN mkdir -p data logs && \
 USER mcp
 
 # Expose port
-EXPOSE 8080
+EXPOSE 8086
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+    CMD curl -f http://localhost:8086/health || exit 1
 
 # Default command
 CMD ["./bin/mcp_server", "--config", "config/server.json"]

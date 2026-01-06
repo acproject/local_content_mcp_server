@@ -1,6 +1,6 @@
 {
   "mcp_client": {
-    "server_url": "http://localhost:8080/mcp",
+    "server_url": "http://localhost:8086/mcp",
     "timeout_ms": 30000,
     "retry_count": 3,
     "retry_delay_ms": 1000,
@@ -12,7 +12,7 @@
     }
   },
   "http_client": {
-    "base_url": "http://localhost:8080",
+    "base_url": "http://localhost:8086",
     "timeout_seconds": 30,
     "retry_count": 3,
     "retry_delay_ms": 1000,

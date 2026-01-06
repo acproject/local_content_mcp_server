@@ -195,7 +195,7 @@ test_installation() {
     local attempt=1
     
     while [[ $attempt -le $max_attempts ]]; do
-        if curl -f -s http://localhost:8080/health > /dev/null 2>&1; then
+        if curl -f -s http://localhost:8086/health > /dev/null 2>&1; then
             log_success "Health check passed"
             break
         fi
@@ -236,10 +236,10 @@ show_summary() {
     echo "  Logs:    sudo journalctl -u $SERVICE_NAME -f"
     echo
     echo "API Endpoints:"
-    echo "  Health:  http://localhost:8080/health"
-    echo "  Info:    http://localhost:8080/info"
-    echo "  MCP:     http://localhost:8080/mcp"
-    echo "  REST:    http://localhost:8080/api/"
+    echo "  Health:  http://localhost:8086/health"
+    echo "  Info:    http://localhost:8086/info"
+    echo "  MCP:     http://localhost:8086/mcp"
+    echo "  REST:    http://localhost:8086/api/"
     echo
     echo "Client Usage:"
     echo "  $INSTALL_DIR/bin/mcp_client --help"

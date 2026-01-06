@@ -84,7 +84,7 @@ private:
     
     // 服务器配置
     std::string host_ = "127.0.0.1";
-    int port_ = 8080;
+    int port_ = 8086;
     
     // 数据库配置
     std::string database_path_ = "./data/content.db";

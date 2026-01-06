@@ -14,7 +14,7 @@ using namespace mcp;
 // 命令行参数解析
 struct CommandLineArgs {
     std::string command;
-    std::string server_url = "http://localhost:8080";
+    std::string server_url = "http://localhost:8086";
     std::string config_file;
     bool verbose = false;
     bool use_mcp = true;
@@ -71,7 +71,7 @@ void print_help() {
     std::cout << "\nOptions:\n";
     std::cout << "  -h, --help                         Show this help\n";
     std::cout << "  -v, --verbose                      Verbose output\n";
-    std::cout << "  -s, --server <url>                 Server URL (default: http://localhost:8080)\n";
+    std::cout << "  -s, --server <url>                 Server URL (default: http://localhost:8086)\n";
     std::cout << "  -c, --config <file>                Config file path\n";
     std::cout << "  --rest                             Use REST API instead of MCP\n";
     std::cout << "\nExamples:\n";

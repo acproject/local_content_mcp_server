@@ -180,7 +180,7 @@ make -j$(nproc)
 {
   "server": {
     "host": "localhost",
-    "port": 8080,
+    "port": 8086,
     "threads": 4
   },
   "database": {
@@ -198,7 +198,7 @@ make -j$(nproc)
 ```json
 {
   "mcp_client": {
-    "server_url": "http://localhost:8080/mcp",
+    "server_url": "http://localhost:8086/mcp",
     "timeout_ms": 30000
   },
   "content_client": {
@@ -287,7 +287,7 @@ RUN mkdir build && cd build && \
     cmake .. -DCMAKE_BUILD_TYPE=Release && \
     make -j$(nproc)
 
-EXPOSE 8080
+EXPOSE 8086
 CMD ["./build/server/mcp_server", "--config", "config/server.json"]
 ```
 

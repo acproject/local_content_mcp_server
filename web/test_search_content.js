@@ -7,7 +7,7 @@
 
 import fetch from 'node-fetch';
 
-const SERVER_URL = 'http://localhost:8080';
+const SERVER_URL = 'http://localhost:8086';
 const MCP_API_URL = `${SERVER_URL}/api/mcp`;
 
 /**
