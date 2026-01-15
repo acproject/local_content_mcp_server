@@ -160,6 +160,21 @@ void MCPServer::initialize_tools() {
   tool_handlers_[stats_tool.name] = [this](const nlohmann::json &args) {
     return tool_get_statistics(args);
   };
+
+  MCPTool export_tool;
+  export_tool.name = "export_content";
+  export_tool.description = "Export all content in JSON format";
+  export_tool.input_schema = {
+      {"type", "object"},
+      {"properties",
+       {{"format",
+         {{"type", "string"},
+          {"description", "Export format (only json is supported)"},
+          {"default", "json"}}}}}};
+  tools_[export_tool.name] = export_tool;
+  tool_handlers_[export_tool.name] = [this](const nlohmann::json &args) {
+    return tool_export_content(args);
+  };
 }
 
 nlohmann::json MCPServer::handle_initialize(const nlohmann::json &params) {
@@ -413,6 +428,11 @@ nlohmann::json MCPServer::tool_get_tags(const nlohmann::json & /* args */) {
 nlohmann::json
 MCPServer::tool_get_statistics(const nlohmann::json & /* args */) {
   return content_manager_->get_statistics();
+}
+
+nlohmann::json MCPServer::tool_export_content(const nlohmann::json &args) {
+  const std::string format = args.value("format", "json");
+  return content_manager_->export_content(format);
 }
 
 // 辅助方法实现

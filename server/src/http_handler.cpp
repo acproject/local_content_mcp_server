@@ -6,8 +6,51 @@
 #include <filesystem>
 #include <string>
 #include <algorithm>
+#include <cctype>
+#include <ctime>
 
 namespace mcp {
+
+namespace {
+
+std::string sanitize_filename(const std::string& input) {
+    std::string output;
+    output.reserve(std::min<size_t>(input.size(), 80));
+    
+    for (unsigned char ch : input) {
+        if (std::isalnum(ch) || ch == '_' || ch == '-' || ch == '.') {
+            output.push_back(static_cast<char>(ch));
+        } else if (std::isspace(ch)) {
+            output.push_back('_');
+        }
+        if (output.size() >= 80) {
+            break;
+        }
+    }
+    
+    while (!output.empty() && (output.back() == '_' || output.back() == '.')) {
+        output.pop_back();
+    }
+    
+    return output;
+}
+
+std::string guess_extension(const std::string& format, const std::string& content_type) {
+    if (format == "json") return ".json";
+    if (format == "md" || format == "markdown") return ".md";
+    if (format == "txt" || format == "text") return ".txt";
+    if (content_type == "markdown") return ".md";
+    if (content_type == "json") return ".json";
+    return ".txt";
+}
+
+std::string guess_mime(const std::string& format, const std::string& content_type) {
+    if (format == "json" || content_type == "json") return "application/json; charset=utf-8";
+    if (format == "md" || format == "markdown" || content_type == "markdown") return "text/markdown; charset=utf-8";
+    return "text/plain; charset=utf-8";
+}
+
+}
 
 HttpHandler::HttpHandler(std::shared_ptr<MCPServer> mcp_server)
     : mcp_server_(mcp_server), server_(std::make_unique<httplib::Server>()), llama_service_(nullptr) {
@@ -91,6 +134,14 @@ void HttpHandler::setup_routes() {
     // RESTful API端点
     server_->Get("/api/content/(\\d+)", [this](const httplib::Request& req, httplib::Response& res) {
         handle_get_content(req, res);
+    });
+
+    server_->Get("/api/content/(\\d+)/export", [this](const httplib::Request& req, httplib::Response& res) {
+        handle_export_content(req, res);
+    });
+    
+    server_->Get("/api/content/export", [this](const httplib::Request& req, httplib::Response& res) {
+        handle_export_all_content(req, res);
     });
     
     server_->Post("/api/content", [this](const httplib::Request& req, httplib::Response& res) {
@@ -292,6 +343,121 @@ void HttpHandler::handle_get_content(const httplib::Request& req, httplib::Respo
     } catch (const std::exception& e) {
         spdlog::error("Error getting content: {}", e.what());
         send_error_response(res, "Invalid content ID", 400);
+    }
+}
+
+void HttpHandler::handle_export_content(const httplib::Request& req, httplib::Response& res) {
+    try {
+        int64_t id = std::stoll(req.matches[1]);
+        std::string format = get_param(req, "format", "");
+        
+        nlohmann::json tool_args;
+        tool_args["id"] = id;
+        
+        auto response = mcp_server_->handle_call_tool("get_content", tool_args);
+        
+        if (!(response.contains("content") && response["content"].is_array() && !response["content"].empty())) {
+            send_error_response(res, "Failed to export content", 500);
+            return;
+        }
+        
+        auto content_text = response["content"][0]["text"].get<std::string>();
+        auto content_json = nlohmann::json::parse(content_text);
+        
+        if (!content_json.value("success", false)) {
+            int code = 500;
+            if (content_json.contains("error") && content_json["error"].is_object()) {
+                code = content_json["error"].value("code", 500);
+            }
+            send_json_response(res, content_json, code);
+            return;
+        }
+        
+        if (!content_json.contains("data") || !content_json["data"].is_object()) {
+            send_error_response(res, "Invalid content data", 500);
+            return;
+        }
+        
+        const auto& item = content_json["data"];
+        const std::string title = item.value("title", "content_" + std::to_string(id));
+        const std::string content_type = item.value("content_type", "text");
+        
+        if (format.empty()) {
+            if (content_type == "markdown") {
+                format = "md";
+            } else if (content_type == "json") {
+                format = "json";
+            } else {
+                format = "txt";
+            }
+        }
+        
+        std::string filename = sanitize_filename(title);
+        if (filename.empty()) {
+            filename = "content_" + std::to_string(id);
+        }
+        filename += guess_extension(format, content_type);
+        
+        std::string body;
+        if (format == "json") {
+            body = item.dump(2);
+        } else {
+            body = item.value("content", "");
+        }
+        
+        res.set_header("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+        res.set_content(std::move(body), guess_mime(format, content_type));
+        
+    } catch (const std::exception& e) {
+        spdlog::error("Error exporting content: {}", e.what());
+        send_error_response(res, "Invalid export request", 400);
+    }
+}
+
+void HttpHandler::handle_export_all_content(const httplib::Request& req, httplib::Response& res) {
+    try {
+        std::string format = get_param(req, "format", "json");
+        if (format != "json") {
+            send_error_response(res, "Only JSON format is supported", 400);
+            return;
+        }
+        
+        nlohmann::json tool_args;
+        tool_args["format"] = format;
+        
+        auto response = mcp_server_->handle_call_tool("export_content", tool_args);
+        
+        if (!(response.contains("content") && response["content"].is_array() && !response["content"].empty())) {
+            send_error_response(res, "Failed to export content", 500);
+            return;
+        }
+        
+        auto content_text = response["content"][0]["text"].get<std::string>();
+        auto content_json = nlohmann::json::parse(content_text);
+        
+        if (!content_json.value("success", false)) {
+            int code = 500;
+            if (content_json.contains("error") && content_json["error"].is_object()) {
+                code = content_json["error"].value("code", 500);
+            }
+            send_json_response(res, content_json, code);
+            return;
+        }
+        
+        if (!content_json.contains("data")) {
+            send_error_response(res, "Invalid export data", 500);
+            return;
+        }
+        
+        const auto now = std::time(nullptr);
+        const std::string filename = "content_export_" + std::to_string(now) + ".json";
+        
+        res.set_header("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+        res.set_content(content_json["data"].dump(2), "application/json; charset=utf-8");
+        
+    } catch (const std::exception& e) {
+        spdlog::error("Error exporting all content: {}", e.what());
+        send_error_response(res, "Failed to export content", 500);
     }
 }
 

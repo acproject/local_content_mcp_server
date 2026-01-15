@@ -47,6 +47,8 @@ private:
     void handle_list_content(const httplib::Request& req, httplib::Response& res);
     void handle_get_tags(const httplib::Request& req, httplib::Response& res);
     void handle_get_statistics(const httplib::Request& req, httplib::Response& res);
+    void handle_export_content(const httplib::Request& req, httplib::Response& res);
+    void handle_export_all_content(const httplib::Request& req, httplib::Response& res);
     
     // 健康检查和信息端点
     void handle_health_check(const httplib::Request& req, httplib::Response& res);

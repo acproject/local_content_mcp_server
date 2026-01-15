@@ -7,13 +7,16 @@ import {
   Chip,
   Button,
   Alert,
+  Snackbar,
   Divider,
   IconButton,
 } from '@mui/material';
+import type { AlertColor } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   ArrowBack as ArrowBackIcon,
+  FileDownload as FileDownloadIcon,
 } from '@mui/icons-material';
 
 import { ContentAPI, ContentItem } from '../services/api';
@@ -24,6 +27,10 @@ const ContentDetail: React.FC = () => {
   const [content, setContent] = useState<ContentItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<AlertColor>('success');
 
   useEffect(() => {
     if (id) {
@@ -54,6 +61,33 @@ const ContentDetail: React.FC = () => {
         setError('删除失败');
         console.error('Error deleting content:', err);
       }
+    }
+  };
+
+  const handleExport = async () => {
+    if (!content) return;
+    try {
+      setExporting(true);
+      const { blob, filename } = await ContentAPI.exportContentFile(content.id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      setSnackbarSeverity('success');
+      setSnackbarMessage('已开始下载');
+      setSnackbarOpen(true);
+    } catch (err) {
+      console.error('Error exporting content:', err);
+      setSnackbarSeverity('error');
+      setSnackbarMessage('导出失败');
+      setSnackbarOpen(true);
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -173,6 +207,14 @@ const ContentDetail: React.FC = () => {
         </Button>
         <Box>
           <IconButton
+            onClick={handleExport}
+            color="primary"
+            title="导出"
+            disabled={exporting}
+          >
+            <FileDownloadIcon />
+          </IconButton>
+          <IconButton
             component={Link}
             to={`/edit/${content.id}`}
             color="primary"
@@ -236,6 +278,14 @@ const ContentDetail: React.FC = () => {
           {renderContent(content.content, content.content_type)}
         </Box>
       </Paper>
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+      >
+        <Alert severity={snackbarSeverity}>{snackbarMessage}</Alert>
+      </Snackbar>
     </Box>
   );
 };

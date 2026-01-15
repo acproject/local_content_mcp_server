@@ -64,6 +64,7 @@ private:
     nlohmann::json tool_list_content(const nlohmann::json& args);
     nlohmann::json tool_get_tags(const nlohmann::json& args);
     nlohmann::json tool_get_statistics(const nlohmann::json& args);
+    nlohmann::json tool_export_content(const nlohmann::json& args);
     
     // 辅助方法
     nlohmann::json create_error_response(int code, const std::string& message);

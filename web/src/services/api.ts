@@ -219,6 +219,51 @@ export class ConfigAPI {
 }
 
 export class ContentAPI {
+  private static parseFilenameFromContentDisposition(headerValue?: string): string | null {
+    if (!headerValue) return null;
+
+    const utf8Match = headerValue.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+    if (utf8Match?.[1]) {
+      try {
+        return decodeURIComponent(utf8Match[1].trim());
+      } catch {
+        return utf8Match[1].trim();
+      }
+    }
+
+    const filenameMatch = headerValue.match(/filename\s*=\s*"([^"]+)"/i) || headerValue.match(/filename\s*=\s*([^;]+)/i);
+    if (filenameMatch?.[1]) {
+      return filenameMatch[1].trim();
+    }
+
+    return null;
+  }
+
+  static getExportUrl(id: number, format?: string): string {
+    const baseUrl = configService.getApiBaseUrl();
+    const query = format ? `?format=${encodeURIComponent(format)}` : '';
+    return `${baseUrl}/content/${id}/export${query}`;
+  }
+
+  static getExportAllUrl(format: string = 'json'): string {
+    const baseUrl = configService.getApiBaseUrl();
+    const query = format ? `?format=${encodeURIComponent(format)}` : '';
+    return `${baseUrl}/content/export${query}`;
+  }
+
+  static async exportContentFile(id: number, format?: string): Promise<{ blob: Blob; filename: string }> {
+    const query = format ? `?format=${encodeURIComponent(format)}` : '';
+    const response = await api.get(`/content/${id}/export${query}`, { responseType: 'blob' });
+
+    const headerValue = (response.headers?.['content-disposition'] || response.headers?.['Content-Disposition']) as
+      | string
+      | undefined;
+    const filenameFromHeader = ContentAPI.parseFilenameFromContentDisposition(headerValue);
+    const filename = filenameFromHeader || `content_${id}`;
+
+    return { blob: response.data as Blob, filename };
+  }
+
   static async getContent(id: number): Promise<ContentItem> {
     const response = await api.get(`/content/${id}`);
     // 处理后端返回的包装格式 - 后端返回 {data: {...}, success: true}
